@@ -21,6 +21,11 @@
       "import": "./dist/index.mjs",
       "require": "./dist/index.js"
     },
+    "./yjs": {
+      "types": "./dist/yjs.d.ts",
+      "import": "./dist/yjs.mjs",
+      "require": "./dist/yjs.js"
+    },
     "./styles.css": "./styles.css"
   },
   "files": [
@@ -30,7 +35,7 @@
     "LICENSE"
   ],
   "scripts": {
-    "build": "tsup src/index.tsx --format cjs,esm --dts --clean",
+    "build": "tsup ./src/index.tsx ./src/yjs.ts --format cjs,esm --dts --clean",
     "check": "tsc -p tsconfig.json --noEmit",
     "test": "npm run build && node test/smoke.cjs",
     "playground": "npm --prefix playground run dev",
@@ -39,7 +44,13 @@
   },
   "peerDependencies": {
     "react": ">=18",
-    "react-dom": ">=18"
+    "react-dom": ">=18",
+    "yjs": "^13.6.31"
+  },
+  "peerDependenciesMeta": {
+    "yjs": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@types/react": "^18.2.0",
@@ -47,7 +58,8 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "tsup": "^8.5.1",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "yjs": "^13.6.31"
   },
   "publishConfig": {
     "access": "public"

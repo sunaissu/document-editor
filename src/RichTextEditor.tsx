@@ -26,6 +26,59 @@ export interface RichTextEditorProps {
   className?: string;
 }
 
+interface SelectionOffsets {
+  start: number;
+  end: number;
+}
+
+const getSelectionOffsets = (root: HTMLElement): SelectionOffsets | null => {
+  const selection = window.getSelection();
+  if (!selection?.rangeCount) return null;
+  const range = selection.getRangeAt(0);
+  if (!root.contains(range.commonAncestorContainer)) return null;
+
+  const beforeStart = range.cloneRange();
+  beforeStart.selectNodeContents(root);
+  beforeStart.setEnd(range.startContainer, range.startOffset);
+  const beforeEnd = range.cloneRange();
+  beforeEnd.selectNodeContents(root);
+  beforeEnd.setEnd(range.endContainer, range.endOffset);
+  return { start: beforeStart.toString().length, end: beforeEnd.toString().length };
+};
+
+const restoreSelectionOffsets = (root: HTMLElement, offsets: SelectionOffsets) => {
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  const range = document.createRange();
+  let consumed = 0;
+  let startSet = false;
+  let endSet = false;
+  let node = walker.nextNode();
+
+  while (node) {
+    const length = node.textContent?.length ?? 0;
+    if (!startSet && offsets.start <= consumed + length) {
+      range.setStart(node, Math.max(0, offsets.start - consumed));
+      startSet = true;
+    }
+    if (!endSet && offsets.end <= consumed + length) {
+      range.setEnd(node, Math.max(0, offsets.end - consumed));
+      endSet = true;
+      break;
+    }
+    consumed += length;
+    node = walker.nextNode();
+  }
+
+  if (!startSet || !endSet) {
+    range.selectNodeContents(root);
+    range.collapse(false);
+  }
+  const selection = window.getSelection();
+  selection?.removeAllRanges();
+  selection?.addRange(range);
+  return range;
+};
+
 export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorProps>(
   (
     {
@@ -91,8 +144,12 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
     useEffect(() => {
       const editor = editorRef.current;
       if (!editor || content === lastEmittedContent.current) return;
+      const selectionOffsets = getSelectionOffsets(editor);
       editor.innerHTML = markdownToEditorHtml(content);
       lastEmittedContent.current = content;
+      if (selectionOffsets && document.activeElement === editor) {
+        savedSelection.current = restoreSelectionOffsets(editor, selectionOffsets).cloneRange();
+      }
     }, [content]);
 
     useImperativeHandle(

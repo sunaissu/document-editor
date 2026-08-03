@@ -58,6 +58,25 @@ export function Notes() {
 
 `DocumentEditor` is controlled, so persistence remains the host application's responsibility. The ref exposes `focus`, `setMode`, `insertText`, `insertMarkdown`, and `appendBlock` for composing external tools such as the calculator package.
 
+## Real-time collaboration
+
+Install Yjs and connect the optional adapter to a provider such as Hocuspocus or `y-websocket`:
+
+```tsx
+import * as Y from "yjs";
+import { DocumentEditor } from "@sunaissu/document-editor";
+import { useYjsDocument } from "@sunaissu/document-editor/yjs";
+
+const document = new Y.Doc();
+
+export function CollaborativeDocument() {
+  const binding = useYjsDocument(document, { initialValue: "# Shared note" });
+  return <DocumentEditor value={binding.value} onChange={binding.onChange} />;
+}
+```
+
+The adapter applies the smallest changed text range to `Y.Text`, while the editor preserves its active selection when remote Markdown arrives. Authentication, persistence, awareness, and network transport remain the host application's responsibility.
+
 ## Themes and brand colors
 
 The editor supports `light`, `dark`, and `system` (automatic) modes. Two brand colors adapt it to the host application without replacing either theme:
