@@ -1,0 +1,61 @@
+{
+  "name": "@sunaissu/document-editor",
+  "version": "0.1.0",
+  "description": "A portable React document editor with visual editing, Markdown source, and preview modes.",
+  "keywords": [
+    "react",
+    "markdown",
+    "document",
+    "editor",
+    "preview"
+  ],
+  "license": "MIT",
+  "author": "sunaissu",
+  "type": "commonjs",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./styles.css": "./styles.css"
+  },
+  "files": [
+    "dist",
+    "styles.css",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsup src/index.tsx --format cjs,esm --dts --clean",
+    "check": "tsc -p tsconfig.json --noEmit",
+    "test": "npm run build && node test/smoke.cjs",
+    "playground": "npm --prefix playground run dev",
+    "playground:build": "npm --prefix playground run build",
+    "prepublishOnly": "npm test"
+  },
+  "peerDependencies": {
+    "react": ">=18",
+    "react-dom": ">=18"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "sideEffects": [
+    "*.css"
+  ]
+}

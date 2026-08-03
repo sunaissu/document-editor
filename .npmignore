@@ -1,0 +1,18 @@
+# Development-only folders
+src/
+test/
+tests/
+playground/
+node_modules/
+
+# Tooling and local artifacts
+.github/
+.vscode/
+.idea/
+tsconfig*.json
+vite.config.*
+*.tgz
+*.log
+.env*
+
+# Package output and public documentation remain included through package.json `files`.
