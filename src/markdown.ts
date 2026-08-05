@@ -12,8 +12,15 @@ function escapeHtml(value: string): string {
 
 function safeLink(value: string): string {
   const trimmed = value.trim();
-  if (/^(javascript|data|vbscript):/i.test(trimmed)) return "#";
-  return escapeHtml(trimmed || "#");
+  if (!trimmed) return "#";
+  if (/^(#|\/|\.\/|\.\.\/)/.test(trimmed)) return escapeHtml(trimmed);
+  try {
+    const protocol = new URL(trimmed).protocol.toLowerCase();
+    if (!["http:", "https:", "mailto:", "tel:"].includes(protocol)) return "#";
+    return escapeHtml(trimmed);
+  } catch {
+    return "#";
+  }
 }
 
 function markdownInlineToHtml(value: string): string {

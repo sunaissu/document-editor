@@ -11,8 +11,22 @@ export interface MarkdownRendererProps {
 const inlinePattern =
   /(!?\[[^\]]+\]\([^)]+\)|\[\[[^\]]+\]\]|`[^`]+`|\*\*[^*]+\*\*|__[^_]+__|~~[^~]+~~|\*[^*]+\*|_[^_]+_|#[\p{L}\p{N}_/-]+)/gu;
 
-function safeHref(value: string): string {
-  return /^(javascript|data|vbscript):/i.test(value.trim()) ? "#" : value;
+function safeHref(value: string, image = false): string {
+  const trimmed = value.trim();
+  if (!trimmed) return "#";
+  if (/^(#|\/|\.\/|\.\.\/)/.test(trimmed)) return trimmed;
+  if (image && /^data:image\/(png|jpeg|gif|webp);base64,/i.test(trimmed)) {
+    return trimmed;
+  }
+  try {
+    const protocol = new URL(trimmed).protocol.toLowerCase();
+    const allowed = image
+      ? new Set(["http:", "https:"])
+      : new Set(["http:", "https:", "mailto:", "tel:"]);
+    return allowed.has(protocol) ? trimmed : "#";
+  } catch {
+    return "#";
+  }
 }
 
 function renderInline(
@@ -31,9 +45,11 @@ function renderInline(
           <img
             key={key}
             className="markdown-image"
-            src={safeHref(image[2])}
+            src={safeHref(image[2], true)}
             alt={image[1]}
+            decoding="async"
             loading="lazy"
+            referrerPolicy="no-referrer"
           />
         );
       }
@@ -45,7 +61,7 @@ function renderInline(
             key={key}
             href={safeHref(link[2])}
             target={openLinksInNewTab ? "_blank" : undefined}
-            rel={openLinksInNewTab ? "noreferrer" : undefined}
+            rel={openLinksInNewTab ? "noopener noreferrer" : undefined}
           >
             {link[1]}
           </a>

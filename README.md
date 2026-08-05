@@ -99,3 +99,5 @@ For full presets, start from the exported `DOCUMENT_EDITOR_LIGHT_THEME` or `DOCU
 Use `MarkdownRenderer` or `RichTextEditor` independently when an application already owns its toolbar and layout. Conversion helpers (`markdownToEditorHtml`, `editorElementToMarkdown`), `countDocument`, and `appendMarkdownBlock` are also exported.
 
 The Markdown subset includes headings, emphasis, links, images, wiki links, tags, tasks, lists, quotes, fenced code, frontmatter, horizontal rules, and tables.
+
+Rendered links accept only web, email, telephone, and relative URLs. Images accept web, relative, and base64-encoded raster image URLs; unsafe schemes are rendered without navigation or loading privileges.

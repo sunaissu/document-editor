@@ -9,6 +9,14 @@
     "editor",
     "preview"
   ],
+  "homepage": "https://github.com/sunaissu/document-editor#readme",
+  "bugs": {
+    "url": "https://github.com/sunaissu/document-editor/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sunaissu/document-editor.git"
+  },
   "license": "MIT",
   "author": "sunaissu",
   "type": "commonjs",
@@ -66,6 +74,9 @@
   },
   "engines": {
     "node": ">=18"
+  },
+  "overrides": {
+    "esbuild": "0.28.1"
   },
   "sideEffects": [
     "*.css"
