@@ -1,0 +1,281 @@
+Document editor implementation review
+11 October 2026
+
+Replaced duplicate parsers with one shared markdown-it parser, added regression-backed Markdown serialization fixes, protected composing input, rebased stale collaborative text, and added local-only shared history. Added find/replace, an outline, task/table/image insertion, six heading levels, an accessible link dialog, and print styling. The tools reuse the current theme; insertion controls are now visible and find/outline sections expand on demand.
+
+Validation: npm test passes 29 tests; type check, CJS/ESM/type builds, playground build, and package dry-run pass. Runtime npm audit reports 0 vulnerabilities. Browser checks cover typing, replacement, tables, tasks, modal focus/Escape, source caret movement, peer-safe undo, composition rebasing, and desktop/mobile light/dark layouts.
+
+Release status: locally validated changes, not published. Visual editing remains a Markdown-normalizing editor, not a lossless editor for arbitrary extensions. Source mode is the preservation path. Natural IME input, other browsers, live provider reconnects, and very large documents need wider coverage before broad release certification.
+
+Feature backlog status
+
+DOC-01 [P1; pass 1] Find and replace with match navigation, whole-word/case options, and replace-all preview.
+  IMPLEMENTED — literal search, navigation, case/word options, replacement, and replace-all confirmation.
+
+DOC-02 [P1; pass 1] A heading outline with jump-to-section and collapse controls for long documents.
+  PARTIAL — heading outline and source jump; no document-section folding.
+
+DOC-03 [P1; pass 1] Visual table controls for adding/removing rows and columns and changing alignment. Markdown table rendering already exists.
+  IMPLEMENTED — visible insertion button, contextual row/column add and delete, column alignment, table deletion, local undo/redo, and bounded growth.
+
+DOC-04 [P1; pass 1] Image insertion by paste or drop, with preview, alt text, captions, and a host-provided upload callback. Image syntax/rendering already exists.
+  PARTIAL — host upload, paste/drop, cancellation, captured anchors and plain captions; percentage progress, pre-upload preview and dedicated caption editing remain.
+
+DOC-05 [P1; pass 1] A slash-command menu for inserting supported blocks without remembering Markdown.
+  IMPLEMENTED — 31 searchable commands in visual and source modes, keyboard/mouse selection, composition/code guards, and undoable insertion.
+
+DOC-06 [P2; pass 1] Drag handles and keyboard commands to move or duplicate document blocks.
+  OPEN — not implemented in this change.
+
+DOC-07 [P1; pass 1] Inline comment threads anchored to text, with resolve/reopen actions and host-owned storage.
+  OPEN — not implemented in this change.
+
+DOC-08 [P2; pass 1] Tracked suggestions that an author can accept or reject separately from ordinary edits.
+  OPEN — not implemented in this change.
+
+DOC-09 [P1; pass 1] Collaborator cursors and selection highlights through a host awareness adapter. Yjs content synchronization already exists.
+  OPEN — not implemented in this change.
+
+DOC-10 [P2; pass 1] LaTeX math blocks and inline equations with source editing and rendered preview.
+  OPEN — not implemented in this change.
+
+DOC-11 [P2; pass 1] Diagram blocks with editable source and a rendered preview.
+  OPEN — not implemented in this change.
+
+DOC-12 [P2; pass 1] Footnotes and citations with navigable references and portable Markdown output.
+  OPEN — not implemented in this change.
+
+DOC-13 [P2; pass 1] Code-block language selection, syntax highlighting, line numbers, and a copy button.
+  OPEN — not implemented in this change.
+
+DOC-14 [P1; pass 1] A print/PDF layout with page size, margins, page breaks, and repeatable headers.
+  PARTIAL — print stylesheet; page-size controls, margins, breaks, and repeated headers remain.
+
+DOC-15 [P2; pass 1] DOCX import/export with a conversion report for content that cannot round-trip.
+  OPEN — not implemented in this change.
+
+DOC-16 [P1; pass 2] Visual task-list controls for adding and toggling checkboxes. Task Markdown already renders, but the visual checkbox is non-editable content.
+  IMPLEMENTED — task insertion and mouse/keyboard toggling.
+
+DOC-17 [P2; pass 2] A frontmatter form with field types, validation, and a raw-source escape hatch.
+  OPEN — not implemented in this change.
+
+DOC-18 [P2; pass 2] Wiki-link and tag autocomplete supplied by the host, with link navigation callbacks.
+  OPEN — not implemented in this change.
+
+DOC-19 [P1; pass 2] Document version comparison and restore hooks; the host provides saved revisions instead of the package owning accounts or a database.
+  OPEN — not implemented in this change.
+
+DOC-20 [P2; pass 2] Template insertion with named placeholders that the user fills before inserting.
+  OPEN — not implemented in this change.
+
+DOC-21 [P2; pass 2] A focus/typewriter mode with configurable line width, font size, and reading emphasis.
+  OPEN — not implemented in this change.
+
+DOC-22 [P2; pass 2] Markdown import diagnostics that show unsupported constructs and preserve their original source.
+  OPEN — not implemented in this change.
+
+DOC-23 [P2; pass 2] Custom document blocks with explicit render, edit, and Markdown serialization rules. The current toolbar-end render slot already permits extra controls.
+  OPEN — not implemented in this change.
+
+DOC-24 [P2; pass 2] Configurable keyboard shortcuts and a command palette, with discoverable commands in both visual and source modes.
+  OPEN — not implemented in this change.
+
+DOC-25 [P1; pass 3] Editable calculation blocks that reopen the calculator and update the result while retaining the original expression.
+  OPEN — not implemented in this change.
+
+DOC-26 [P2; pass 3] Permission-aware whiteboard-region embeds with source links and a portable static fallback.
+  OPEN — not implemented in this change.
+
+DOC-27 [P2; pass 3] Synchronized source/preview scrolling that keeps the same passage in view in split mode.
+  OPEN — not implemented in this change.
+
+DOC-28 [P2; pass 3] Paste/import cleanup preview for Word or web content, showing what formatting will be retained or removed.
+  OPEN — not implemented in this change.
+
+DOC-29 [P2; pass 3] A document accessibility helper that finds missing alt text, unclear link text, and skipped heading levels before export.
+  OPEN — not implemented in this change.
+
+Detailed audit status
+
+DOC-R01 [RISK; P1] A stale full-text callback can remove a remote insertion
+  IMPLEMENTED — local changed ranges rebase through a bounded journal of observed Y.Text deltas.
+
+DOC-R02 [CODE; P1] Caret restoration uses obsolete absolute offsets
+  PARTIAL — offsets track incoming text changes and backward selections; not a full relative-position model for every rich-text transformation.
+
+DOC-R03 [RISK; P1] IME composition has no explicit protection
+  IMPLEMENTED — visual/source composition guards; synthetic source composition tested, physical IME/browser matrix still needed.
+
+DOC-R04 [CODE; P1] Nested lists flatten or lose child content
+  IMPLEMENTED — nested and loose lists preserve child blocks.
+
+DOC-R05 [CODE; P2] Ordered-list starting numbers are discarded
+  IMPLEMENTED — ordered starting numbers preserved.
+
+DOC-R06 [CODE; P1] Global whitespace cleanup alters code blocks
+  IMPLEMENTED — code whitespace no longer passes through global cleanup.
+
+DOC-R07 [CODE; P1] A leading horizontal rule can consume the whole document as frontmatter
+  IMPLEMENTED — frontmatter requires a closing delimiter.
+
+DOC-R08 [CODE; P2] Table cells do not escape pipe characters
+  IMPLEMENTED — table pipes escaped.
+
+DOC-R09 [CODE; P2] Table alignment is discarded on serialization
+  IMPLEMENTED — table alignment preserved.
+
+DOC-R10 [CODE; P2] Literal formatting punctuation is not escaped on output
+  IMPLEMENTED — literal inline and block punctuation escaped.
+
+DOC-R11 [CODE; P2] Bare relative links are changed to a placeholder
+  IMPLEMENTED — relative links retained.
+
+DOC-R12 [CODE; P2] Mixed text with an empty-alt image is not tokenized correctly
+  IMPLEMENTED — empty-alt images and surrounding text preserved.
+
+DOC-R13 [GAP; P2] Fence-aware code parsing and serialization
+  IMPLEMENTED — safe fence lengths and literal code contents.
+
+DOC-R14 [GAP; P2] Nested inline formatting and structured Markdown parsing
+  IMPLEMENTED — shared markdown-it parser replaces duplicate partial parsers.
+
+DOC-R15 [CODE; P1] Tab and Shift+Tab have no normal focus-exit path
+  IMPLEMENTED — removed editor Tab traps.
+
+DOC-R16 [GAP; P2] A fully accessible link dialog
+  IMPLEMENTED — native modal, initial focus, Escape, focus return, and unsafe-link feedback.
+
+DOC-R17 [CODE; P2] The code toolbar command means different things in each mode
+  IMPLEMENTED — source and visual code commands create code blocks.
+
+DOC-R18 [CODE; P2] appendMarkdownBlock can attach a block to the previous paragraph
+  IMPLEMENTED — appended blocks gain the required separator.
+
+DOC-R19 [RISK; P2] Changing initialValue can reseed a deliberately empty shared document
+  IMPLEMENTED — initialValue changes do not reseed the same mounted binding; server-side initialization is still required before provider synchronization.
+
+DOC-R20 [GAP; P1] A reusable collaboration history contract
+  IMPLEMENTED — optional DocumentHistory and local-origin Yjs undo/redo.
+
+DOC-R21 [GAP; P2] Keep location and selection when switching editing modes
+  OPEN — general mode-switch location preservation is not implemented.
+
+DOC-R22 [GAP; P2] Visible active-format state and complete heading controls
+  IMPLEMENTED — six heading levels in visual/source modes and bold/italic/strikethrough active state in visual mode.
+
+DOC-R23 [GAP; P2] Visual task-list creation and list transformations
+  PARTIAL — create/toggle tasks; general list transformations remain.
+
+DOC-R24 [GAP; P2] A shared link-validation and host-resolution API
+  PARTIAL — shared URL policy; host resolution/navigation callbacks remain.
+
+DOC-R25 [GAP; P2] A non-destructive mode for unsupported document content
+  OPEN — visual editing normalizes supported Markdown and does not preserve arbitrary unsupported blocks byte-for-byte.
+
+DOC-R26 [GAP; P2] Document statistics based on readable content
+  OPEN — statistics still count source Markdown.
+
+Review evidence
+
+The original findings and research remain in ../project-feature-backlog.txt. Browser runner: ../noteboard/qa/review.cjs. Local preview fixture: ../noteboard/tests/browser. Screenshots: ../noteboard/qa/artifacts. Those test artifacts are excluded from npm packages.
+
+The review loop reproduced failures, added regressions, applied focused fixes, and reran affected checks. Open and partial items above remain work; passing checks do not establish that no other bugs or useful features exist.
+
+12 October 2026 follow-up
+
+Added visible insertion controls, contextual table editing, numbered lists, strikethrough, inline code, clear formatting, and bounded local undo/redo. Blocks insert near the caret. Hardened command, paste/drop, and composition paths. Cached unchanged Markdown rendering, deferred outline parsing until opened, made replace-all linear, and removed large-array spreading from code-fence serialization. Removed decorative and stale comments.
+
+Root audit: 0 vulnerabilities. Playground audit: 2 high findings fixed with compatible dependency updates; 0 remaining. All 26 tests, package builds, playground build, package dry-run, and Chrome regression checks pass. A 150,000-backtick-run regression covers serialization without argument-stack overflow. Browser checks cover table CRUD/alignment/history, hostile HTML commands/drop, composition guards, and mobile light/dark layouts.
+
+See ../npm-package-review-2026-10-12.txt for combined evidence and limits.
+
+Formatting follow-up — 12 October 2026
+
+Reproduced the actual playground with a 72px document heading caused by a global playground h1 rule. Scoped that rule to the playground header and defined shared package typography for all six heading levels, paragraphs, lists, tables, quotes, and code. Visual and preview modes now use the same metrics. Removed obsolete parser-era CSS, duplicate task bullets, and nested code backgrounds. Restored scrolling in the visual writing pane and combined insertion/find/outline controls into a compact row.
+
+Validation: playground TypeScript/production build, the full Chrome browser regression suite, and a new actual-playground formatting check pass. The focused check covers heading isolation, visual/preview typography parity, task layout, reaching the end of a long document, mobile overflow, and light/dark themes. Runner: ../noteboard/qa/format-review.cjs (requires the document-editor playground on port 5174). Screenshots are in ../noteboard/qa/artifacts/format-*.png.
+
+Toolbar and commands follow-up — 12 October 2026
+
+Grouped formatting controls into labelled sections. Bullet, numbered, and task lists share Lists; bold, italic, strikethrough, inline code, and clear formatting share Text. Replaced expanding Find/Outline sections with one docked, scrollable side panel; mobile panels fill the writing area. Added close/Escape and focus return. Removed the playground + Block control while retaining the host toolbar extension API.
+
+Added 31 searchable slash commands: paragraphs, six heading levels, four inline formats, three list types, quote, four code-block presets, divider, table, link, image, note/warning blocks, meeting notes, decisions, pros/cons, summary, Find, and Outline. Commands replace an otherwise empty slash line, use safe Markdown rendering, and preserve existing document content. Link/image commands open their entry forms. Up/Down, Enter, Escape, mouse selection, and undo are supported. Fenced/inline code, composition, read-only state, and stale triggers are guarded. Window resize closes the menu so it cannot stay at an obsolete position.
+
+Fixed a caret-restoration race: focusing the editor could overwrite the saved insertion range before it was restored. Table insertion after using a panel is now covered by the existing browser regression.
+
+Validation: 29 unit/regression tests, package/type builds, playground build, formatting checks, the full browser suite, and qa/commands-review.cjs. New browser checks cover toolbar grouping, exclusive panels, stable toolbar height, focus/Escape, slash mouse/keyboard insertion, undo/redo, templates, no-match state, code/composition guards, read-only mode, and mobile menu bounds. No dependency added. Physical IME and wider browser coverage remain as previously noted.
+
+Selection formatting and toolbar redesign — 2026-10-12
+
+Replaced the two-row ribbon with one row of dropdowns. Lists stay grouped; table editing appears as a menu when a cell is selected. More contains secondary groups on narrow screens. Find and Outline retain their docked panels.
+
+Selected visual text now has a contextual toolbar for bold, italic, strike, inline code, and links. Marks are read across the actual range, including mixed states. Partial inline-code removal preserves the unselected code. Menu commands restore the selected range; keyboard focus can move into the selection toolbar with Alt+F10. Arrow keys, Home/End, and Escape are supported. Collapsing selection, moving focus outside, scrolling, or resizing dismisses the bubble. Composition suppresses it. Caret state checks do not traverse the document. Removed obsolete ribbon styles; no dependencies added.
+
+Research: Notion and Word use selection formatting menus. Tiptap separates fixed document controls, selection menus, and slash insertion. This implementation adopts that interaction pattern without adding an editor framework. WAI-ARIA toolbar and toggle-button patterns inform focus and state handling.
+https://www.notion.com/en-gb/help/writing-and-editing-basics
+https://support.microsoft.com/en-au/word/use-the-mini-toolbar-to-format-text
+https://tiptap.dev/docs/editor/getting-started/style-editor/custom-menus
+https://www.w3.org/WAI/ARIA/apg/patterns/toolbar/
+https://www.w3.org/WAI/ARIA/apg/patterns/button/
+
+Validation: 29 package tests, type and distribution builds; Chrome browser checks for mixed formatting, selection-only changes, partial code toggling, keyboard toolbar access, responsive bounds, light/dark typography, dropdowns, panels, slash commands, tables, history, and collaboration. The existing noteboard/calculator browser regression also passes. Runners: ../noteboard/qa/{selection-review,commands-review,format-review,review}.cjs. Chromium automation does not establish physical touch/IME or other-browser parity.
+
+Header visual refinement — 2026-10-12
+Replaced text-heavy triggers and the bordered paragraph select with consistent stroke icons, a borderless style control, and a subtle Insert button. Editing tools stay on the left; navigation and view controls align right. The header remains one row, with secondary tools under More below 760px to leave room for table actions. Accessible button names and keyboard behavior are retained. No dependency added. Verified package/playground builds, typography and light/dark mobile layouts, selection formatting, menus, slash commands, and the existing package browser regression.
+
+12 October 2026 completion review
+
+This pass preserves link destinations with unmatched parentheses, link/image titles and literal image descriptions. Preview search and outline navigation use source offsets, including duplicate formatted headings and CRLF input. Imperative source insertion and mode changes defer during composition. Arbitrary Markdown extension roundtrips remain outside the supported subset.
+
+The full feature contracts, dependencies and completion criteria are in implementation-plan.txt. Existing OPEN/PARTIAL features remain unfinished. Final validation: npm test passes 33 tests, including TypeScript and CJS/ESM/declaration builds. npm run playground:build and npm pack --dry-run --json pass. Package and playground npm audit --json each report zero known vulnerabilities. Git diff --check passes. The tarball includes README.md, implementation-review.txt and implementation-plan.txt; development tests and browser artifacts remain excluded.
+
+Chrome: the shared qa/review.cjs suite passes, including collaboration, table editing, history, export, hostile input and narrow light/dark layouts. qa/completion-review.cjs passes calculator history/Ans/calculus replay, significant figures, preview navigation and source composition guards with no uncaught page errors. These commands run from the sibling noteboard repository against its local tests/browser fixture. Browser instructions are in noteboard/qa/README.txt.
+
+Added .github/workflows/ci.yml for package tests on Node 18/22/24, playground builds on Node 22/24, package dry-runs and dependency audits. The workflows have not executed on GitHub. Local execution used the installed Node runtime, not the complete matrix. Workflow references: https://github.com/actions/checkout and https://github.com/actions/setup-node.
+
+Existing uncommitted changes were retained. No package version, npm publication, deployment or Git commit was made during this review.
+
+12 October 2026 feature and playground review
+
+Added the optional onUploadImage callback with a cancel signal, file/paste/drop admission, pending/failure states and captured visual/source insertion positions. Guards reject stale completions after edits, cancellation, read-only and unmount. Image destinations are validated separately from links. Captions remain plain paragraphs; percentage progress and a dedicated caption editor remain planned.
+
+Validation: package tests pass (calculator 9, document-editor 35, Noteboard 49; 93 total), with TypeScript checks and CJS/ESM/declaration builds. All three playground production builds and npm pack --dry-run --json pass. README and implementation docs are included in the archives. The shared Chrome review.cjs and completion-review.cjs suites pass. New qa/features-review.cjs covers actual playgrounds; qa/upload-review.cjs checks delayed uploads. No uncaught page errors were recorded. Noteboard light/dark desktop and 390-pixel layouts were captured and inspected. Tests use local Chrome, not a cross-browser or hosted-storage matrix.
+
+Implementation plans and README API examples match the current scope. OPEN/PARTIAL items remain unfinished. Dependencies were unchanged in this feature pass; the preceding audit results above apply.
+
+12 October 2026 toolbar interaction review
+
+Replaced grouped Text, Lists, Insert, Navigate and View dropdowns and the narrow-layout More menu with directly visible buttons. Actions use icons, accessible names, hover labels and keyboard focus indicators; groups wrap on narrow layouts. The paragraph/heading selector remains a native select. Table actions remain contextual. Side panels and link dialogs restore focus to the actual invoking button. Opening Image now skips the hidden upload input when choosing the initial focus target.
+
+Validation: npm test passes 35 tests with type, CJS/ESM and declaration builds; npm run playground:build passes. qa/commands-review.cjs covers direct controls, focus restoration, slash commands, insertion, undo and source composition. qa/review.cjs checks editing, collaboration, tables, links and hostile input. qa/interaction-review.cjs checks visible controls and desktop/mobile layouts, including Image-panel focus and Escape. The new direct-toolbar screenshots were inspected. No new dependencies or storage changes were introduced.
+
+12 October 2026 security and correctness review loop
+
+Unified Markdown image validation with insertion/upload policy; removed stack-exhausting base64 repetition; invalidated replace-all confirmations after content or editing-state changes.
+
+Four passes: reproduce/fix, inspect fixes and adjacent paths, integration boundaries, and final scoped review. The last pass found no additional actionable issues. Calculator 11, document-editor 37 and Noteboard 56 tests pass (104 total), with package type/build checks and all playground builds. Chrome qa/security-review.cjs, qa/review.cjs, qa/upload-review.cjs, qa/interaction-review.cjs and qa/features-review.cjs pass. All six npm dependency audits report zero known vulnerabilities. Package dry runs contain intended runtime/docs only; diff whitespace checks pass.
+
+README documents the resulting behavior and limits. Server authorization and aggregate quotas, browser image decoding, cross-browser/device testing and sustained load remain outside this local review. No publication or Git commit was made. Full workspace evidence: ../npm-security-review-2026-10-12.txt.
+
+12 October 2026 visual spacing review
+
+Replaced the paragraph dropdown with direct Text/H1–H6 buttons. Added labeled tool groups and visible insertion labels; moved history, search, outline and view switching into their own row. The formatting strip scrolls horizontally when needed and shows an overflow hint. Preview/read-only views hide formatting actions. Increased panel field spacing and dialog padding. Reduced the playground header and removed frontmatter from its initial sample so writing starts near the top. Theme controls use one three-column row. Desktop inspector scrolling stays within the workspace.
+
+Validated at 320, 390, 768 and 1440 pixels in Chrome with qa/ui-layout-review.cjs. Checks cover page overflow, utility-control overlap, image-panel padding, six direct heading actions, preview controls and numerical-option alignment. Light/dark and mobile screenshots were inspected. Existing commands-review.cjs, interaction-review.cjs and features-review.cjs pass. Document-editor npm test passes 37 tests; all three playground production builds pass. Physical touch and other browsers were not tested.
+
+12 October 2026 text-style and writing-width refinement
+
+Replaced the inline H1–H6 row with one current-style control and a docked gallery of Body text and heading previews. Cards show relative type sizes, descriptions and selected state. Opening focuses the selected card; Escape restores trigger focus; applying returns focus to visual/source editing. Read-only/preview hides the style panel. Its header stays visible while scrolling. Other toolbar controls retain their layout.
+
+Removed the 840px cap from visual and preview content. Both fill their pane with 20–32px padding; source uses matching padding. Browser checks cover 320/390/1440/2560px full-width panes, visual heading/body conversion, active cards, editor focus, Escape and preview behavior. The updated ui-layout-review.cjs checks all six source heading styles at 320/390/768/1440px. npm test passes 37 tests and the playground production build passes. Light/dark desktop/mobile screenshots were inspected.
+
+12 October 2026 inline text-style correction
+
+Removed the text-style side panel and preview cards. Paragraph and six heading icons now use the same ToolbarGroup, button sizing, strokes, hover and active styling as the surrounding text/list controls. Full names remain available in tooltips and accessible labels. The existing full-width writing/preview layout is preserved; style changes do not open a panel or resize it.
+
+qa/text-style-review.cjs verifies keyboard heading changes, paragraph conversion, selected state, restored editor focus and full-width panes at 320/390/1440/2560px. qa/ui-layout-review.cjs covers all six source heading actions and existing control layout. Desktop/mobile light/dark screenshots were reviewed.
+Validation result: 37 package tests, the production playground build, and both updated browser suites pass. No page overflow or writing-width reduction was found at the tested widths.
+
+Final package review — 12 October 2026
+Removed implementation-plan.txt and preserved unfinished contracts in feature-backlog.txt. The backlog is not a release completion claim. Regression suites and playground production builds were repeated before the local commit. No npm publication or deployment was performed.

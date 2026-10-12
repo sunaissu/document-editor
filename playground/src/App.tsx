@@ -5,14 +5,21 @@ import {
   type DocumentEditorHandle,
   type DocumentEditorMode,
   type DocumentEditorThemeMode,
+  type DocumentImageUpload,
 } from "@sunaissu/document-editor";
 
-const SAMPLE_DOCUMENT = `---
-title: Portable notes
-tags: [playground, markdown]
----
+const uploadPlaygroundImage: DocumentImageUpload = (file, { signal }) => new Promise((resolve, reject) => {
+  const reader = new FileReader();
+  const abort = () => reader.abort();
+  const cleanup = () => signal.removeEventListener("abort", abort);
+  reader.onload = () => { cleanup(); resolve({ url: String(reader.result), alt: file.name.replace(/\.[^.]+$/, "") }); };
+  reader.onerror = () => { cleanup(); reject(new Error("Could not read the image")); };
+  reader.onabort = () => { cleanup(); reject(new Error("Upload cancelled")); };
+  signal.addEventListener("abort", abort, { once: true });
+  if (signal.aborted) { cleanup(); reject(new Error("Upload cancelled")); } else reader.readAsDataURL(file);
+});
 
-# Build ideas that travel
+const SAMPLE_DOCUMENT = `# Project notes
 
 This editor keeps **portable Markdown** as its source of truth while giving you a calm visual writing surface.
 
@@ -51,10 +58,9 @@ export default function App() {
       <header className="playground-header">
         <div>
           <span className="eyebrow">@sunaissu/document-editor</span>
-          <h1>Write once. Keep the source portable.</h1>
+          <h1>A place to put your thoughts.</h1>
           <p>
-            Exercise the package directly from source. Switch views, edit the document,
-            and call its imperative insertion API from outside the editor.
+            Write, format, and organize your notes. Switch to Markdown whenever you need it.
           </p>
         </div>
         <div className="package-badge"><span />Local package playground</div>
@@ -66,21 +72,13 @@ export default function App() {
             ref={editorRef}
             value={value}
             onChange={setValue}
+            onUploadImage={uploadPlaygroundImage}
             mode={mode}
             onModeChange={setMode}
             readOnly={readOnly}
             theme={theme}
             brandColors={{ primary: primaryColor, secondary: secondaryColor }}
             placeholder="Start a portable Markdown document…"
-            renderToolbarEnd={() => (
-              <button
-                type="button"
-                onClick={() => editorRef.current?.appendBlock("> Added from renderToolbarEnd")}
-                disabled={readOnly}
-              >
-                + Block
-              </button>
-            )}
           />
         </div>
 
@@ -92,7 +90,7 @@ export default function App() {
 
           <div className="control-group">
             <label>Color theme</label>
-            <div className="mode-grid">
+            <div className="mode-grid three-columns">
               {(["system", "light", "dark"] as DocumentEditorThemeMode[]).map((candidate) => (
                 <button
                   type="button"

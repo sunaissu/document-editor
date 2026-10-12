@@ -40,12 +40,14 @@
     "dist",
     "styles.css",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "implementation-review.txt",
+    "feature-backlog.txt"
   ],
   "scripts": {
     "build": "tsup ./src/index.tsx ./src/yjs.ts --format cjs,esm --dts --clean",
     "check": "tsc -p tsconfig.json --noEmit",
-    "test": "npm run build && node test/smoke.cjs",
+    "test": "npm run check && npm run build && node --test",
     "playground": "npm --prefix playground run dev",
     "playground:build": "npm --prefix playground run build",
     "prepublishOnly": "npm test"
@@ -61,8 +63,10 @@
     }
   },
   "devDependencies": {
+    "@types/markdown-it": "^14.1.2",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
+    "jsdom": "^26.1.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "tsup": "^8.5.1",
@@ -80,5 +84,8 @@
   },
   "sideEffects": [
     "*.css"
-  ]
+  ],
+  "dependencies": {
+    "markdown-it": "^14.3.1"
+  }
 }

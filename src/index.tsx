@@ -36,3 +36,13 @@ export type {
 } from "./theme";
 
 export { DocumentEditor as default } from "./DocumentEditor";
+
+export { findDocumentMatches, getDocumentOutline } from "./parser";
+export type { FindOptions, DocumentHeading } from "./parser";
+
+export type { DocumentHistory } from "./history";
+
+export type { TableAction } from "./table";
+export type { DocumentImageUpload, UploadedDocumentImage } from "./imageUpload";
+
+export type { FormatState, SelectionFormats, RichTextSelection } from "./selectionFormatting";

@@ -1,5 +1,7 @@
-import { useCallback, useEffect, useMemo, useSyncExternalStore } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useSyncExternalStore } from 'react';
 import * as Y from 'yjs';
+import type { DocumentHistory } from './history';
+import { applyTextEdit, trackText } from './yjsText';
 
 export const YJS_DOCUMENT_TEXT_KEY = 'document-content';
 
@@ -10,40 +12,11 @@ export interface YjsDocumentOptions {
 
 export interface YjsDocumentBinding {
   value: string;
-  onChange: (value: string) => void;
+  onChange: (value: string, previous?: string) => void;
+  text: Y.Text;
+  localOrigin: object;
+  history: DocumentHistory;
 }
-
-const replaceChangedRange = (text: Y.Text, nextValue: string) => {
-  const currentValue = text.toString();
-  if (currentValue === nextValue) return;
-
-  let prefixLength = 0;
-  const maxPrefix = Math.min(currentValue.length, nextValue.length);
-  while (
-    prefixLength < maxPrefix &&
-    currentValue[prefixLength] === nextValue[prefixLength]
-  ) {
-    prefixLength += 1;
-  }
-
-  let suffixLength = 0;
-  const maxSuffix = Math.min(
-    currentValue.length - prefixLength,
-    nextValue.length - prefixLength,
-  );
-  while (
-    suffixLength < maxSuffix &&
-    currentValue[currentValue.length - 1 - suffixLength] ===
-      nextValue[nextValue.length - 1 - suffixLength]
-  ) {
-    suffixLength += 1;
-  }
-
-  const deleteLength = currentValue.length - prefixLength - suffixLength;
-  const insertion = nextValue.slice(prefixLength, nextValue.length - suffixLength);
-  if (deleteLength) text.delete(prefixLength, deleteLength);
-  if (insertion) text.insert(prefixLength, insertion);
-};
 
 /**
  * Connects a controlled Markdown editor to a Y.Text CRDT.
@@ -54,7 +27,7 @@ export function useYjsDocument(
   options: YjsDocumentOptions = {},
 ): YjsDocumentBinding {
   const textKey = options.textKey ?? YJS_DOCUMENT_TEXT_KEY;
-  const text = useMemo(() => document.getText(textKey), [document, textKey]);
+  const text = useMemo(() => { const value = document.getText(textKey); trackText(value); return value; }, [document, textKey]);
   const localOrigin = useMemo(() => ({ source: 'document-editor' }), [document]);
   const subscribe = useCallback((notify: () => void) => {
     const observer = () => notify();
@@ -64,15 +37,33 @@ export function useYjsDocument(
   const getSnapshot = useCallback(() => text.toString(), [text]);
   const value = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 
+  const initialized = useRef(new WeakSet<Y.Text>());
+  const base = useRef(value);
+  base.current = value;
   useEffect(() => {
+    if (initialized.current.has(text)) return;
+    initialized.current.add(text);
     if (text.length === 0 && options.initialValue) {
       document.transact(() => text.insert(0, options.initialValue as string), localOrigin);
     }
   }, [document, localOrigin, options.initialValue, text]);
 
-  const onChange = useCallback((nextValue: string) => {
-    document.transact(() => replaceChangedRange(text, nextValue), localOrigin);
+  const onChange = useCallback((nextValue: string, previous = base.current) => {
+    document.transact(() => applyTextEdit(text, previous, nextValue), localOrigin);
+    base.current = nextValue;
   }, [document, localOrigin, text]);
 
-  return { value, onChange };
+  const managerRef = useRef<Y.UndoManager | null>(null);
+  useEffect(() => {
+    const manager = new Y.UndoManager(text, { trackedOrigins: new Set([localOrigin]) });
+    managerRef.current = manager;
+    return () => { managerRef.current = null; manager.destroy(); };
+  }, [text, localOrigin]);
+  const history = useMemo<DocumentHistory>(() => ({
+    undo: () => { managerRef.current?.undo(); },
+    redo: () => { managerRef.current?.redo(); },
+    canUndo: () => Boolean(managerRef.current?.undoStack.length),
+    canRedo: () => Boolean(managerRef.current?.redoStack.length),
+  }), []);
+  return { value, onChange, text, localOrigin, history };
 }

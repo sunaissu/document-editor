@@ -9,17 +9,17 @@
 body { min-width: 320px; min-height: 100vh; margin: 0; background: radial-gradient(circle at 15% -10%, rgba(56, 189, 248, 0.13), transparent 28rem), #080a0e; }
 button { font: inherit; }
 
-.playground-shell { width: min(1500px, calc(100% - 2rem)); margin: 0 auto; padding: clamp(2rem, 5vw, 4.5rem) 0; }
-.playground-header { display: flex; align-items: flex-end; justify-content: space-between; gap: 2rem; margin-bottom: 1.5rem; }
+.playground-shell { width: min(1500px, calc(100% - 2rem)); margin: 0 auto; padding: 1.25rem 0 2rem; }
+.playground-header { display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; margin-bottom: 1rem; }
 .playground-header > div:first-child { max-width: 760px; }
 .eyebrow { color: #7dd3fc; font: 700 0.7rem/1.2 "SFMono-Regular", Consolas, monospace; letter-spacing: 0.12em; text-transform: uppercase; }
-h1 { max-width: 650px; margin: 0.65rem 0 0.8rem; font-size: clamp(2rem, 5vw, 4.5rem); line-height: 0.98; letter-spacing: -0.055em; }
-.playground-header p { max-width: 670px; margin: 0; color: #8b96a6; font-size: 0.95rem; line-height: 1.65; }
+.playground-header h1 { max-width: none; margin: 0.35rem 0 0.4rem; font-size: clamp(1.5rem, 2.4vw, 1.875rem); line-height: 1.15; letter-spacing: -0.055em; }
+.playground-header p { max-width: 670px; margin: 0; color: #8b96a6; font-size: 0.85rem; line-height: 1.5; }
 .package-badge { display: flex; align-items: center; gap: 0.5rem; padding: 0.55rem 0.75rem; border: 1px solid #27303b; border-radius: 999px; color: #aab4c1; background: rgba(15, 18, 24, 0.8); font-size: 0.7rem; white-space: nowrap; }
 .package-badge span { width: 7px; height: 7px; border-radius: 50%; background: #73e2bd; box-shadow: 0 0 12px #73e2bd; }
 
-.playground-grid { min-height: 670px; display: grid; grid-template-columns: minmax(0, 1fr) 270px; overflow: hidden; border: 1px solid #252c35; border-radius: 14px; background: #0b0d11; box-shadow: 0 28px 100px rgba(0, 0, 0, 0.4); }
-.editor-stage { min-width: 0; min-height: 0; height: 670px; }
+.playground-grid { min-height: 760px; display: grid; grid-template-columns: minmax(0, 1fr) 270px; overflow: hidden; border: 1px solid #252c35; border-radius: 14px; background: #0b0d11; box-shadow: 0 28px 100px rgba(0, 0, 0, 0.4); }
+.editor-stage { min-width: 0; min-height: 0; height: 760px; }
 .inspector { padding: 1rem; border-left: 1px solid #252c35; background: #0e1116; }
 .inspector-heading { padding-bottom: 0.9rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #252c35; }
 .inspector-heading span { font-size: 0.75rem; font-weight: 700; }
@@ -55,3 +55,23 @@ h1 { max-width: 650px; margin: 0.65rem 0 0.8rem; font-size: clamp(2rem, 5vw, 4.5
   .inspector { border-top: 1px solid #252c35; border-left: 0; }
   .editor-stage { height: 620px; }
 }
+
+@media(max-width:900px) { .playground-shell { width: min(100% - 1rem, 760px); padding-top:1rem; } .playground-header { gap:.5rem; } .package-badge { display:none; } }
+
+/* Keep inspector controls readable and evenly spaced at every width. */
+.inspector { padding:20px; }
+.inspector-heading { gap:12px; flex-wrap:wrap; }
+.inspector-heading small { font-size:10px; color:#929dac; }
+.control-group { margin-top:20px; gap:8px; }
+.control-group > label, .inspector legend { font-size:10px; color:#a5afbd; }
+.mode-grid button, .wide-action, .inspector select { min-height:38px; padding:8px 10px; font-size:12px; line-height:1.4; }
+.brand-color-grid { gap:8px; }
+.brand-color-grid label { min-height:38px; padding:5px 8px; font-size:11px; }
+.metrics span { font-size:10px; color:#929dac; }
+.source-drawer summary { gap:12px; flex-wrap:wrap; }
+.inspector :is(button,input,select):focus-visible, .source-drawer summary:focus-visible { outline:2px solid #7dd3fc; outline-offset:3px; }
+@media(max-width:900px) { .inspector { padding:20px; } .mode-grid button, .wide-action { min-height:42px; } }
+
+@media(min-width:901px) { .playground-grid { height:clamp(620px, calc(100dvh - 160px), 960px); min-height:0; } .editor-stage { height:100%; min-height:0; } .inspector { overflow-y:auto; overscroll-behavior:contain; scrollbar-width:thin; } }
+
+.inspector .three-columns { grid-template-columns:repeat(3,minmax(0,1fr)); }
