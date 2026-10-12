@@ -115,7 +115,7 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
     const editorRef = useRef<HTMLDivElement>(null);
     const savedSelection = useRef<Range | null>(null);
     const lastEmittedContent = useRef(content);
-    const [initialHtml] = useState(() => markdownToEditorHtml(content));
+    const [initialMarkup] = useState(() => ({ __html: markdownToEditorHtml(content) }));
 
     const emitChange = useCallback(() => {
       if (!editorRef.current || readOnly || composing) return;
@@ -329,7 +329,7 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
         contentEditable={!readOnly}
         suppressContentEditableWarning
         data-placeholder={placeholder}
-        dangerouslySetInnerHTML={{ __html: initialHtml }}
+        dangerouslySetInnerHTML={initialMarkup}
         onCompositionStart={() => setComposing(true)}
         onCompositionEnd={() => {
           setComposing(false);

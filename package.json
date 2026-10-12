@@ -1,6 +1,6 @@
 {
   "name": "@sunaissu/document-editor",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A portable React document editor with visual editing, Markdown source, and preview modes.",
   "keywords": [
     "react",

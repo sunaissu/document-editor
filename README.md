@@ -153,3 +153,5 @@ Markdown images use the same URL policy as the image panel and upload results: H
 A replace-all confirmation belongs to the exact document value being reviewed. External edits, including peer changes, invalidate it. Review again before applying the replacement. Closing the panel or switching to read-only also clears the confirmation.
 
 The visual editor and Markdown preview fill their available pane width, with 20–32px edge padding and no fixed reading-column cap. Markdown source uses the same edge spacing. Text-style changes run directly from the toolbar and preserve the writing width.
+
+Visual editing keeps the initial sanitized HTML object stable across React renders. Later remote content is applied through the selection-preserving update effect; focus, toolbar, and host layout renders do not restore old DOM content. This also prevents duplicate text when a React 19 host uses multiple editor panes.
