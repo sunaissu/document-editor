@@ -62,7 +62,7 @@ export function DocumentTools({ value, readOnly, panel, onPanelChange, onChange,
       aria-pressed={textStyle === style.value} onClick={() => onTextStyleChange(style.value)}
     ><ToolbarIcon name={style.label} /></button>)}</ToolbarGroup></>} secondary={<>
       {!readOnly && listTools}
-      {!readOnly && <ToolbarGroup label="Insert">{insertTools}{toggle("table", "Table")}{toggle("image", "Image")}<button type="button" title="Divider" aria-label="Divider" onClick={() => onInsert("---")}><ToolbarIcon name="Divider" /><span>Divider</span></button></ToolbarGroup>}
+      {!readOnly && <ToolbarGroup label="Insert">{insertTools}{toggle("table", "Table")}{toggle("image", "Image")}<button type="button" title="Equation" aria-label="Equation" onClick={() => onInsert("$\nE = mc^2\n$")}>Equation</button><button type="button" title="Divider" aria-label="Divider" onClick={() => onInsert("---")}><ToolbarIcon name="Divider" /><span>Divider</span></button></ToolbarGroup>}
       
       {contextTools}
     </>} />

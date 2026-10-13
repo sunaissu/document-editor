@@ -6,6 +6,8 @@ const ts = require('typescript');
 const file = require('node:path').resolve(__dirname, '../src/parser.ts');
 const compiled = new Module(file, module);
 compiled.paths = module.paths;
+const mathFile = require("node:path").resolve(__dirname, "../src/math.ts"), math = new Module(mathFile, module); math.paths = module.paths; math._compile(ts.transpileModule(fs.readFileSync(mathFile, "utf8"), { compilerOptions: { module: ts.ModuleKind.CommonJS, esModuleInterop: true } }).outputText, mathFile);
+const originalRequire = compiled.require.bind(compiled); compiled.require = name => name === "./math" ? math.exports : originalRequire(name);
 compiled._compile(ts.transpileModule(fs.readFileSync(file, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, esModuleInterop: true } }).outputText, file);
 const { parseDocumentMarkdown: parse, safeDocumentLink } = compiled.exports;
 

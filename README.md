@@ -155,3 +155,9 @@ A replace-all confirmation belongs to the exact document value being reviewed. E
 The visual editor and Markdown preview fill their available pane width, with 20–32px edge padding and no fixed reading-column cap. Markdown source uses the same edge spacing. Text-style changes run directly from the toolbar and preserve the writing width.
 
 Visual editing keeps the initial sanitized HTML object stable across React renders. Later remote content is applied through the selection-preserving update effect; focus, toolbar, and host layout renders do not restore old DOM content. This also prevents duplicate text when a React 19 host uses multiple editor panes.
+
+## Equations
+
+Use `$E = mc^2$` or `\(\frac{1}{2}\)` inline. For a display equation, put `$$` on its own opening and closing lines. The Equation toolbar button inserts an editable example. Visual mode retains the original TeX as code; Preview and Split render native MathML with the TeX annotation available to assistive technology. Fenced and inline code stay literal. Markdown exports preserve the equation source. `renderDocumentMath(source, displayMode)` returns portable MathML and reports invalid input with a generic error.
+
+The renderer uses KaTeX with `trust: false`, strict errors, at most 100 macro expansions, and a 10-em size limit. Each equation is limited to 4,096 characters and 128 KiB of output. Each preview renders up to 64 equations and 32 KiB of equation source; the rest remain visible as literal TeX. Inline delimiter scanning also has a per-document budget. No remote font or stylesheet is required.

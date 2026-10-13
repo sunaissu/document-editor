@@ -1,6 +1,8 @@
 import MarkdownIt from "markdown-it";
+import { installMath } from "./math";
 
 const parser = new MarkdownIt({ html: false, linkify: false });
+installMath(parser);
 const escapeHtml = parser.utils.escapeHtml;
 const validateLink = parser.validateLink;
 parser.core.ruler.after("block", "source_ranges", state => {
@@ -79,7 +81,7 @@ parser.renderer.rules.image = (tokens, index, options, _env, renderer) => {
 };
 
 /** Render CommonMark, tables, task lists and wiki links without accepting raw HTML. */
-export function parseDocumentMarkdown(value: string, sourceMap = false): string {
+export function parseDocumentMarkdown(value: string, sourceMap = false, renderMath = false): string {
   const normalized = value.replace(/\r\n?/g, "\n");
   const frontmatter = normalized.match(/^---\n([\s\S]*?)\n---(?:\n|$)/);
   const body = frontmatter ? normalized.slice(frontmatter[0].length) : normalized;
@@ -90,7 +92,7 @@ export function parseDocumentMarkdown(value: string, sourceMap = false): string 
     while ((match = newline.exec(value))) offsets.push(match.index + match[0].length);
   }
   const prefixLines = frontmatter ? (frontmatter[0].match(/\n/g) || []).length : 0;
-  const environment = sourceMap ? { sourceOffsets: offsets.slice(prefixLines), sourceLength: value.length } : {};
+  const environment = { renderMath, ...(sourceMap ? { sourceOffsets: offsets.slice(prefixLines), sourceLength: value.length } : {}) };
   const prefixAttributes = sourceMap ? ` data-source-start="0" data-source-end="${offsets[prefixLines] ?? value.length}"` : "";
   return (frontmatter ? '<pre data-raw-block="frontmatter"' + prefixAttributes + '>' + escapeHtml(frontmatter[1]) + '</pre>\n' : '') + parser.render(body, environment);
 }

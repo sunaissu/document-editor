@@ -279,3 +279,5 @@ Validation result: 37 package tests, the production playground build, and both u
 
 Final package review — 12 October 2026
 Removed implementation-plan.txt and preserved unfinished contracts in feature-backlog.txt. The backlog is not a release completion claim. Regression suites and playground production builds were repeated before the local commit. No npm publication or deployment was performed.
+
+2026-10-13 math follow-up: bounded KaTeX-to-MathML preview, source-preserving visual editing, Equation insertion, and portable MathML API. Forty tests pass, including hostile math, macro loops, escaped delimiters, code isolation and visual round-trips. Package and playground builds pass. Native MathML rendering passed in Chrome through the consuming Thyncspace frontend.

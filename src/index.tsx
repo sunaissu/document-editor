@@ -46,3 +46,5 @@ export type { TableAction } from "./table";
 export type { DocumentImageUpload, UploadedDocumentImage } from "./imageUpload";
 
 export type { FormatState, SelectionFormats, RichTextSelection } from "./selectionFormatting";
+
+export { renderDocumentMath } from "./math";

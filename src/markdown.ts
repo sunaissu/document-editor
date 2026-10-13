@@ -20,6 +20,7 @@ function inlineNodeToMarkdown(node: Node): string {
   const children = () => Array.from(node.childNodes).map(inlineNodeToMarkdown).join("");
   const tag = node.tagName.toLowerCase();
 
+  if (node.dataset.documentMath === "inline") return node.textContent || "";
   if (tag === "br") return "  \n";
   if (tag === "strong" || tag === "b") return `**${children()}**`;
   if (tag === "em" || tag === "i") return `_${children()}_`;
@@ -71,6 +72,7 @@ function blockNodeToMarkdown(node: Node): string {
   if (tag === "blockquote") return Array.from(node.childNodes).map(blockNodeToMarkdown).filter(value => value.trim()).join("\n\n").split("\n").map(line => line ? `> ${line}` : ">").join("\n");
   if (tag === "hr") return "---";
   if (tag === "pre") {
+    if (node.dataset.rawBlock === "math") return node.textContent || "";
     if (node.dataset.rawBlock === "frontmatter") return `---\n${node.textContent || ""}\n---`;
     const text = (node.textContent || "").replace(/\n$/, "");
     const fence = "`".repeat((text.match(/`+/g) || []).reduce((longest, match) => Math.max(longest, match.length + 1), 3));

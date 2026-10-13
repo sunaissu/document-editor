@@ -352,3 +352,7 @@
 
 .document-toolbar-scroll:not(:has(.document-toolbar-inline)) { display:none; }
 .sunaissu-document-toolbar:not(:has(.document-toolbar-actions .document-toolbar-inline)) .document-toolbar-utility { border-bottom:0; margin-bottom:0; padding-bottom:0; }
+
+.document-math { overflow-wrap: normal; }
+div.document-math { overflow-x: auto; overscroll-behavior: contain; padding-block: .75rem; }
+.document-math math { max-width: 100%; }
