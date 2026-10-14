@@ -1,3 +1,5 @@
+Release candidate details: [RELEASE.txt](./RELEASE.txt). This candidate has not been published.
+
 # @sunaissu/document-editor
 
 A controlled React document editor that stores portable Markdown while offering visual, Markdown source, preview, and split views.

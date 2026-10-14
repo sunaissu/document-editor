@@ -1,6 +1,6 @@
 {
   "name": "@sunaissu/document-editor",
-  "version": "1.1.0",
+  "version": "1.1.0-rc.1",
   "description": "A portable React document editor with visual editing, Markdown source, and preview modes.",
   "keywords": [
     "react",
@@ -42,7 +42,8 @@
     "README.md",
     "LICENSE",
     "implementation-review.txt",
-    "feature-backlog.txt"
+    "feature-backlog.txt",
+    "RELEASE.txt"
   ],
   "scripts": {
     "build": "tsup ./src/index.tsx ./src/yjs.ts --format cjs,esm --dts --clean",
@@ -50,7 +51,8 @@
     "test": "npm run check && npm run build && node --test",
     "playground": "npm --prefix playground run dev",
     "playground:build": "npm --prefix playground run build",
-    "prepublishOnly": "npm test"
+    "prepublishOnly": "npm test",
+    "prepack": "npm run build"
   },
   "peerDependencies": {
     "react": ">=18",
@@ -74,7 +76,8 @@
     "yjs": "^13.6.31"
   },
   "publishConfig": {
-    "access": "public"
+    "access": "public",
+    "tag": "next"
   },
   "engines": {
     "node": ">=18"
