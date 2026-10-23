@@ -1,3 +1,10 @@
 node_modules
 dist
 *.tgz
+
+# Local planning and review notes
+/implementation-review.txt
+/feature-backlog.txt
+/RELEASE.txt
+/review-checklist.txt
+/qa/artifacts/

@@ -36,3 +36,19 @@ export type {
 } from "./theme";
 
 export { DocumentEditor as default } from "./DocumentEditor";
+
+export { findDocumentMatches, getDocumentOutline } from "./parser";
+export type { FindOptions, DocumentHeading } from "./parser";
+export { previewDocumentReplacement } from "./replacementPreview";
+
+export type { DocumentHistory } from "./history";
+
+export type { TableAction } from "./table";
+export type { DocumentImageUpload, UploadedDocumentImage } from "./imageUpload";
+
+export type { FormatState, SelectionFormats, RichTextSelection } from "./selectionFormatting";
+
+export { renderDocumentMath } from "./math";
+
+export { getDocumentEditorScrollbarStyle, getDocumentEditorScrollbarProps } from "./scrollbar";
+export type { DocumentEditorScrollbarOptions } from "./scrollbar";

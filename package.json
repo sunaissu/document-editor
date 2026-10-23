@@ -1,6 +1,6 @@
 {
   "name": "@sunaissu/document-editor",
-  "version": "1.0.0",
+  "version": "1.1.0-rc.5",
   "description": "A portable React document editor with visual editing, Markdown source, and preview modes.",
   "keywords": [
     "react",
@@ -45,10 +45,11 @@
   "scripts": {
     "build": "tsup ./src/index.tsx ./src/yjs.ts --format cjs,esm --dts --clean",
     "check": "tsc -p tsconfig.json --noEmit",
-    "test": "npm run build && node test/smoke.cjs",
+    "test": "npm run check && npm run build && node --test",
     "playground": "npm --prefix playground run dev",
     "playground:build": "npm --prefix playground run build",
-    "prepublishOnly": "npm test"
+    "prepublishOnly": "npm test",
+    "prepack": "npm run build"
   },
   "peerDependencies": {
     "react": ">=18",
@@ -61,8 +62,10 @@
     }
   },
   "devDependencies": {
+    "@types/markdown-it": "^14.1.2",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
+    "jsdom": "^26.1.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "tsup": "^8.5.1",
@@ -70,7 +73,8 @@
     "yjs": "^13.6.31"
   },
   "publishConfig": {
-    "access": "public"
+    "access": "public",
+    "tag": "next"
   },
   "engines": {
     "node": ">=18"
@@ -80,5 +84,9 @@
   },
   "sideEffects": [
     "*.css"
-  ]
+  ],
+  "dependencies": {
+    "katex": "0.19.0",
+    "markdown-it": "^14.3.1"
+  }
 }
