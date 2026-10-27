@@ -1,13 +1,18 @@
 {
   "name": "@sunaissu/document-editor",
   "version": "1.1.0-rc.5",
-  "description": "A portable React document editor with visual editing, Markdown source, and preview modes.",
+  "description": "A controlled React document editor with visual editing, Markdown source, preview and split views.",
   "keywords": [
     "react",
     "markdown",
     "document",
     "editor",
-    "preview"
+    "preview",
+    "typescript",
+    "react-component",
+    "markdown-editor",
+    "wysiwyg",
+    "yjs"
   ],
   "homepage": "https://github.com/sunaissu/document-editor#readme",
   "bugs": {
@@ -40,7 +45,10 @@
     "dist",
     "styles.css",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "assets/brand/sunaissu.svg",
+    "assets/brand/sora-OFL.txt",
+    "assets/brand/SOURCE.txt"
   ],
   "scripts": {
     "build": "tsup ./src/index.tsx ./src/yjs.ts --format cjs,esm --dts --clean",

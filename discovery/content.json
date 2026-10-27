@@ -1,0 +1,49 @@
+{
+  "name": "Document Editor",
+  "title": "React Markdown document editor with visual and source views",
+  "description": "A controlled React document editor with visual editing, Markdown source, preview and split views.",
+  "packageName": "@sunaissu/document-editor",
+  "output": "playground/dist",
+  "mainMetadata": true,
+  "sections": [
+    {
+      "heading": "What does it store?",
+      "paragraphs": [
+        "The editor uses portable Markdown. The host application owns the controlled document value, persistence and access permissions."
+      ]
+    },
+    {
+      "heading": "How do I install it?",
+      "paragraphs": [
+        "Install the package and import its stylesheet. React and React DOM 18 or newer are required."
+      ],
+      "code": "npm install @sunaissu/document-editor\nimport { DocumentEditor } from \"@sunaissu/document-editor\";\nimport \"@sunaissu/document-editor/styles.css\";"
+    },
+    {
+      "heading": "Can it collaborate?",
+      "paragraphs": [
+        "An optional Yjs entry point is available. A production host must provide the collaboration transport, authentication and storage. Installing the editor alone does not provide a hosted collaboration service."
+      ]
+    },
+    {
+      "heading": "What is the playground?",
+      "paragraphs": [
+        "The playground demonstrates the current source version. Its examples are separate from your production documents and may be newer than the published package."
+      ]
+    }
+  ],
+  "links": [
+    {
+      "label": "npm package",
+      "url": "https://www.npmjs.com/package/@sunaissu/document-editor"
+    },
+    {
+      "label": "Source repository",
+      "url": "https://github.com/sunaissu/document-editor"
+    },
+    {
+      "label": "Installation and API documentation",
+      "url": "https://github.com/sunaissu/document-editor#readme"
+    }
+  ]
+}

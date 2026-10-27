@@ -1,5 +1,7 @@
 # @sunaissu/document-editor
 
+<p><img src="assets/brand/sunaissu.svg" alt="Sunaissu" width="104"></p>
+
 A controlled React document editor that stores portable Markdown while offering visual, Markdown source, preview, and split views.
 
 ## Install
@@ -202,3 +204,16 @@ The renderer uses KaTeX with `trust: false`, strict errors, at most 100 macro ex
 ## Reviewing bulk replacements
 
 Review replace all shows the first five matches in context, with removed text struck through and replacement text underlined. The displayed total includes every matching occurrence. Go to match closes the panel and selects the original source range, which also exposes the text on narrow screens. Cancel leaves the document unchanged. Editing the document, search options or replacement invalidates the review. Apply is one undoable change; preview/read-only views cannot replace text. `previewDocumentReplacement(value, query, replacement, options)` exposes the same excerpts to hosts.
+
+## Public documentation and discovery
+
+The deployed playground includes `/guide.html` with installation, use cases and
+host responsibilities, plus `/product.txt` as a plain-text reference. Set
+`SITE_ORIGIN` to the final HTTPS origin without a trailing slash when running
+`npm run playground:build`. Publish `playground/dist`. Without an origin, the
+generated pages request no indexing. Install both root and playground dependencies
+for a clean build; keep the repository source alongside the playground.
+
+The playground reflects this source checkout, which may be newer than npm. The
+package retains its existing name and dist-tag; discovery changes do not publish
+a release or rename imports.
