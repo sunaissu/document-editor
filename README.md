@@ -94,6 +94,45 @@ Primary is used for links and active controls; secondary is used for success sta
 
 For full presets, start from the exported `DOCUMENT_EDITOR_LIGHT_THEME` or `DOCUMENT_EDITOR_DARK_THEME`, or use `applyDocumentEditorBrandColors`. The corresponding `--document-*` CSS variables can also be overridden in a host stylesheet.
 
+The playground offers Default, Ocean, Forest, Plum, and Custom color schemes alongside light, dark, and automatic themes. Changing either color picker selects Custom. Choose Default to restore the package colors for the active theme. These controls use the existing `theme` and `brandColors` props; use `themeOverrides` for individual colors such as `background`, `surface`, and `text`.
+
+## Scrollbars
+
+Pass `scrollbar` to customize scrollbars inside the editor, including source, preview, toolbar, and tool panels:
+
+```tsx
+<DocumentEditor
+  value={markdown}
+  onChange={setMarkdown}
+  scrollbar={{ thumbColor: "#9333ea", trackColor: "transparent", width: "thin" }}
+/>
+```
+
+Set `width: "none"` to hide scrollbars while keeping scrolling enabled. Omit `scrollbar`, or pass `undefined`, to restore native styling. The default width is `"auto"`. A thumb color alone gives a transparent track; a track color alone uses `currentColor` for the thumb.
+
+For a scroll container owned by your application, spread `getDocumentEditorScrollbarProps`. It supplies the class, styles, and browser fallback attributes. Keep those props when adding your own classes or styles:
+
+```tsx
+import { DocumentEditor, getDocumentEditorScrollbarProps } from "@sunaissu/document-editor";
+
+const scrollbar = { thumbColor: "#9333ea", trackColor: "transparent" };
+const scrollProps = getDocumentEditorScrollbarProps(scrollbar);
+
+<div
+  {...scrollProps}
+  role="region"
+  aria-label="Document editor"
+  tabIndex={0}
+  style={{ ...scrollProps.style, height: "100dvh", overflow: "auto" }}
+>
+  <DocumentEditor value={markdown} onChange={setMarkdown} scrollbar={scrollbar} />
+</div>
+```
+
+`getDocumentEditorScrollbarStyle` also exports the CSS variables separately. Custom colors use standard scrollbar properties where supported and scoped WebKit fallbacks elsewhere. Native styling does not apply the fallback colors.
+
+Fallback compatibility: Playwright's WebKit 27.2 build on Windows did not reliably repaint when switching from native to custom scrollbar colors after mount. Initial custom colors rendered correctly. Chrome passed live changes.
+
 ## Image uploads
 
 Pass a stable `onUploadImage` callback to enable file selection in the Image panel and image paste/drop in the writing pane. The host owns storage and returns a URL with optional description and caption:
@@ -142,7 +181,7 @@ The link dialog supports keyboard focus, Escape, and focus return. Visual serial
 
 ## Development checks
 
-Run `npm test`, `npm run playground:build`, and `npm pack --dry-run --json` before release. The GitHub Actions workflow is configured to test the package on Node 18, 22 and 24, build the playground on Node 22/24, and audit both dependency trees. Run the browser checks in qa/ separately. The workflow has not been run on GitHub as part of this local review.
+Run `npm test`, `npm run playground:build`, and `npm pack --dry-run --json` before release. The GitHub Actions workflow tests the package on Node 18, 22 and 24, builds the playground on Node 22/24, and audits both dependency trees. Check browser interactions separately with `npm run playground`.
 
 ## Review safeguards
 
@@ -159,3 +198,20 @@ Visual editing keeps the initial sanitized HTML object stable across React rende
 Use `$E = mc^2$` or `\(\frac{1}{2}\)` inline. For a display equation, put `$$` on its own opening and closing lines. The Equation toolbar button inserts an editable example. Visual mode retains the original TeX as code; Preview and Split render native MathML with the TeX annotation available to assistive technology. Fenced and inline code stay literal. Markdown exports preserve the equation source. `renderDocumentMath(source, displayMode)` returns portable MathML and reports invalid input with a generic error.
 
 The renderer uses KaTeX with `trust: false`, strict errors, at most 100 macro expansions, and a 10-em size limit. Each equation is limited to 4,096 characters and 128 KiB of output. Each preview renders up to 64 equations and 32 KiB of equation source; the rest remain visible as literal TeX. Inline delimiter scanning also has a per-document budget. No remote font or stylesheet is required.
+
+## Reviewing bulk replacements
+
+Review replace all shows the first five matches in context, with removed text struck through and replacement text underlined. The displayed total includes every matching occurrence. Go to match closes the panel and selects the original source range, which also exposes the text on narrow screens. Cancel leaves the document unchanged. Editing the document, search options or replacement invalidates the review. Apply is one undoable change; preview/read-only views cannot replace text. `previewDocumentReplacement(value, query, replacement, options)` exposes the same excerpts to hosts.
+
+## Public documentation and discovery
+
+The deployed playground includes `/guide.html` with installation, use cases and
+host responsibilities, plus `/product.txt` as a plain-text reference. Set
+`SITE_ORIGIN` to the final HTTPS origin without a trailing slash when running
+`npm run playground:build`. Publish `playground/dist`. Without an origin, the
+generated pages request no indexing. Install both root and playground dependencies
+for a clean build; keep the repository source alongside the playground.
+
+The playground reflects this source checkout, which may be newer than npm. The
+package retains its existing name and dist-tag; discovery changes do not publish
+a release or rename imports.
