@@ -99,12 +99,18 @@ export function parseDocumentMarkdown(value: string, sourceMap = false, renderMa
 
 export interface DocumentHeading { level: number; text: string; start: number; end: number }
 export function getDocumentOutline(value: string): DocumentHeading[] {
-  const prefix = value.match(/^---\r?\n[\s\S]*?\r?\n---(?:\r?\n|$)/)?.[0] || "";
-  const body = value.slice(prefix.length), lines = body.split("\n");
-  const offsets = [prefix.length];
-  lines.forEach(line => offsets.push(offsets[offsets.length - 1] + line.length + 1));
+  const prefix = value.match(/^---(?:\r\n?|\n)[\s\S]*?(?:\r\n?|\n)---(?:\r\n?|\n|$)/)?.[0] || "";
+  const body = value.slice(prefix.length);
+  const offsets = [prefix.length], ends: number[] = [];
+  const newline = /\r\n|\r|\n/g;
+  let match: RegExpExecArray | null;
+  while ((match = newline.exec(body))) {
+    ends.push(prefix.length + match.index);
+    offsets.push(prefix.length + match.index + match[0].length);
+  }
+  ends.push(value.length);
   const tokens = parser.parse(body, {});
-  return tokens.flatMap((token, index) => token.type === "heading_open" && token.map ? [{ level: Number(token.tag.slice(1)), text: tokens[index + 1].content, start: offsets[token.map[0]], end: Math.min(value.length, offsets[token.map[1]] - 1) }] : []);
+  return tokens.flatMap((token, index) => token.type === "heading_open" && token.map ? [{ level: Number(token.tag.slice(1)), text: tokens[index + 1].content, start: offsets[token.map[0]], end: ends[token.map[1] - 1] }] : []);
 }
 
 export interface FindOptions { matchCase?: boolean; wholeWord?: boolean }
@@ -115,7 +121,7 @@ export function findDocumentMatches(value: string, query: string, options: FindO
   let match: RegExpExecArray | null;
   while ((match = pattern.exec(value))) {
     const index = match.index;
-    if (!options.wholeWord || (!/[\p{L}\p{N}_]$/u.test(value.slice(Math.max(0, index - 2), index)) && !/^[\p{L}\p{N}_]/u.test(value.slice(index + match[0].length, index + match[0].length + 2)))) matches.push(index);
+    if (!options.wholeWord || (!/[\p{L}\p{N}\p{M}_]$/u.test(value.slice(Math.max(0, index - 2), index)) && !/^[\p{L}\p{N}\p{M}_]/u.test(value.slice(index + match[0].length, index + match[0].length + 2)))) matches.push(index);
   }
   return matches;
 }

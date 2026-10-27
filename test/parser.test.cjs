@@ -70,3 +70,24 @@ test('large raster data URLs validate without recursive-regexp stack exhaustion'
  const url='data:image/png;base64,'+'A'.repeat(7*1024*1024);
  assert.equal(compiled.exports.safeDocumentImage(url),url);
 });
+
+test('outline handles CR, CRLF, and mixed newlines without losing source ranges', () => {
+ const { getDocumentOutline } = compiled.exports;
+ for (const newline of ['\r', '\r\n', '\n']) {
+  const input = ['---', 'title: hidden', '---', '# First', '', '## Last'].join(newline);
+  assert.deepEqual(getDocumentOutline(input), [
+   { level: 1, text: 'First', start: input.indexOf('# First'), end: input.indexOf('# First') + 7 },
+   { level: 2, text: 'Last', start: input.indexOf('## Last'), end: input.length },
+  ]);
+ }
+ const input = '# First\r\n\r## Last\n';
+ assert.deepEqual(getDocumentOutline(input).map(heading => input.slice(heading.start, heading.end)), ['# First', '## Last']);
+ const setext = '---\rtitle: hidden\n---\r\nFirst\r\n===\n\rSecond\r---';
+ assert.deepEqual(getDocumentOutline(setext).map(heading => [heading.level, setext.slice(heading.start, heading.end)]), [[1, 'First\r\n==='], [2, 'Second\r---']]);
+});
+
+test('whole-word search does not split combining marks from their word', () => {
+ const { findDocumentMatches } = compiled.exports;
+ assert.deepEqual(findDocumentMatches('cafe\u0301 cafe', 'cafe', { wholeWord: true }), [6]);
+ assert.deepEqual(findDocumentMatches('a\u0301word word', 'word', { wholeWord: true }), [7]);
+});

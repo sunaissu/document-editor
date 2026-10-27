@@ -10,7 +10,8 @@ import {
   useRef,
   useState,
 } from "react";
-import { moveTextPosition } from "./textEdit";
+import { captureVisualSelection, restoreVisualSelection } from "./visualSelection";
+import { applyVisualEdit } from "./visualEdit";
 import { safeDocumentLink } from "./parser";
 import { editorElementToMarkdown, markdownToEditorHtml } from "./markdown";
 
@@ -43,61 +44,6 @@ export interface RichTextEditorProps {
   className?: string;
 }
 
-interface SelectionOffsets {
-  start: number;
-  end: number;
-  backward: boolean;
-}
-
-const getSelectionOffsets = (root: HTMLElement): SelectionOffsets | null => {
-  const selection = window.getSelection();
-  if (!selection?.rangeCount) return null;
-  const range = selection.getRangeAt(0);
-  if (!root.contains(range.commonAncestorContainer)) return null;
-
-  const beforeStart = range.cloneRange();
-  beforeStart.selectNodeContents(root);
-  beforeStart.setEnd(range.startContainer, range.startOffset);
-  const beforeEnd = range.cloneRange();
-  beforeEnd.selectNodeContents(root);
-  beforeEnd.setEnd(range.endContainer, range.endOffset);
-  return { start: beforeStart.toString().length, end: beforeEnd.toString().length, backward: selection.anchorNode === range.endContainer && selection.anchorOffset === range.endOffset && !selection.isCollapsed };
-};
-
-const restoreSelectionOffsets = (root: HTMLElement, offsets: SelectionOffsets) => {
-  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
-  const range = document.createRange();
-  let consumed = 0;
-  let startSet = false;
-  let endSet = false;
-  let node = walker.nextNode();
-
-  while (node) {
-    const length = node.textContent?.length ?? 0;
-    if (!startSet && offsets.start <= consumed + length) {
-      range.setStart(node, Math.max(0, offsets.start - consumed));
-      startSet = true;
-    }
-    if (!endSet && offsets.end <= consumed + length) {
-      range.setEnd(node, Math.max(0, offsets.end - consumed));
-      endSet = true;
-      break;
-    }
-    consumed += length;
-    node = walker.nextNode();
-  }
-
-  if (!startSet || !endSet) {
-    range.selectNodeContents(root);
-    range.collapse(false);
-  }
-  const selection = window.getSelection();
-  selection?.removeAllRanges();
-  selection?.addRange(range);
-  if (offsets.backward) selection?.setBaseAndExtent(range.endContainer, range.endOffset, range.startContainer, range.startOffset);
-  return range;
-};
-
 export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorProps>(
   (
     {
@@ -115,15 +61,25 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
     const editorRef = useRef<HTMLDivElement>(null);
     const savedSelection = useRef<Range | null>(null);
     const lastEmittedContent = useRef(content);
+    const lastSerializedContent = useRef<string | null>(null);
     const [initialMarkup] = useState(() => ({ __html: markdownToEditorHtml(content) }));
 
-    const emitChange = useCallback(() => {
-      if (!editorRef.current || readOnly || composing) return;
-      const nextContent = editorElementToMarkdown(editorRef.current);
+    const commitChange = useCallback(() => {
+      const editor = editorRef.current;
+      if (!editor || readOnly) return;
+      const canonicalize = (value: string) => {
+        const container = editor.ownerDocument.createElement("div");
+        container.innerHTML = markdownToEditorHtml(value);
+        return editorElementToMarkdown(container);
+      };
+      const serialized = editorElementToMarkdown(editor);
       const previous = lastEmittedContent.current;
+      const nextContent = applyVisualEdit(previous, lastSerializedContent.current ?? canonicalize(previous), serialized, canonicalize);
+      lastSerializedContent.current = serialized;
       lastEmittedContent.current = nextContent;
       onChange(nextContent, previous);
-    }, [onChange, readOnly, composing]);
+    }, [onChange, readOnly]);
+    const emitChange = useCallback(() => { if (!composing) commitChange(); }, [commitChange, composing]);
 
     const rememberSelection = useCallback(() => {
       const editor = editorRef.current;
@@ -182,18 +138,17 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
 
     useEffect(() => {
       const editor = editorRef.current;
-      if (!editor || composing || content === lastEmittedContent.current) return;
-      const selectionOffsets = getSelectionOffsets(editor);
-      const before = editor.textContent || "";
-      editor.innerHTML = markdownToEditorHtml(content);
-      if (selectionOffsets) {
-        const after = editor.textContent || "";
-        selectionOffsets.start = moveTextPosition(selectionOffsets.start, before, after);
-        selectionOffsets.end = moveTextPosition(selectionOffsets.end, before, after);
+      if (!editor || composing) return;
+      if (content === lastEmittedContent.current) {
+        if (lastSerializedContent.current === null) lastSerializedContent.current = editorElementToMarkdown(editor);
+        return;
       }
+      const selection = captureVisualSelection(editor, markdownToEditorHtml(lastEmittedContent.current));
+      editor.innerHTML = markdownToEditorHtml(content);
       lastEmittedContent.current = content;
-      if (selectionOffsets && document.activeElement === editor) {
-        savedSelection.current = restoreSelectionOffsets(editor, selectionOffsets).cloneRange();
+      lastSerializedContent.current = editorElementToMarkdown(editor);
+      if (selection && document.activeElement === editor) {
+        savedSelection.current = restoreVisualSelection(editor, selection).cloneRange();
       }
     }, [content, composing]);
 
@@ -333,12 +288,7 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
         onCompositionStart={() => setComposing(true)}
         onCompositionEnd={() => {
           setComposing(false);
-          if (editorRef.current && !readOnly) {
-            const next = editorElementToMarkdown(editorRef.current);
-            const previous = lastEmittedContent.current;
-            lastEmittedContent.current = next;
-            onChange(next, previous);
-          }
+          commitChange();
         }}
         onInput={emitChange}
         onKeyUp={rememberSelection}

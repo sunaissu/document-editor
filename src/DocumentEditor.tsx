@@ -139,11 +139,12 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
     useEffect(() => {
       const textarea = textareaRef.current;
       if (!textarea || sourceComposing.current) return;
-      if (textarea.value !== value) {
+      const source = value.replace(/\r\n?/g, "\n");
+      if (textarea.value !== source) {
         const before = textarea.value, direction = textarea.selectionDirection;
-        const start = moveTextPosition(textarea.selectionStart, before, value);
-        const end = moveTextPosition(textarea.selectionEnd, before, value);
-        textarea.value = value;
+        const start = moveTextPosition(textarea.selectionStart, before, source);
+        const end = moveTextPosition(textarea.selectionEnd, before, source);
+        textarea.value = source;
         textarea.setSelectionRange(start, end, direction);
       }
       sourceBase.current = value;
@@ -188,8 +189,9 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
         }
         const start = textarea.selectionStart;
         const end = textarea.selectionEnd;
-        const selection = value.slice(start, end) || fallback;
-        onChange(`${value.slice(0, start)}${prefix}${selection}${suffix}${value.slice(end)}`);
+        const source = textarea.value;
+        const selection = source.slice(start, end) || fallback;
+        onChange(`${source.slice(0, start)}${prefix}${selection}${suffix}${source.slice(end)}`, value);
         requestAnimationFrame(() => {
           textarea.focus();
           textarea.setSelectionRange(start + prefix.length, start + prefix.length + selection.length);
@@ -208,15 +210,17 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
         }
         const selectionStart = textarea.selectionStart;
         const selectionEnd = textarea.selectionEnd;
-        const lineStart = value.lastIndexOf("\n", selectionStart - 1) + 1;
-        const nextBreak = value.indexOf("\n", selectionEnd);
-        const lineEnd = nextBreak === -1 ? value.length : nextBreak;
-        const replacement = value
+        const source = textarea.value;
+        const lineStart = selectionStart === 0 ? 0 : source.lastIndexOf("\n", selectionStart - 1) + 1;
+        const selectedEnd = selectionEnd > selectionStart && source[selectionEnd - 1] === "\n" ? selectionEnd - 1 : selectionEnd;
+        const nextBreak = source.indexOf("\n", selectedEnd);
+        const lineEnd = nextBreak === -1 ? source.length : nextBreak;
+        const replacement = source
           .slice(lineStart, lineEnd)
           .split("\n")
           .map((line) => prefix + (stripHeading ? line.replace(/^ {0,3}#{1,6}\s+/, "") : line))
           .join("\n");
-        onChange(`${value.slice(0, lineStart)}${replacement}${value.slice(lineEnd)}`);
+        onChange(`${source.slice(0, lineStart)}${replacement}${source.slice(lineEnd)}`, value);
         requestAnimationFrame(() => {
           textarea.focus();
           textarea.setSelectionRange(lineStart, lineStart + replacement.length);
@@ -248,7 +252,8 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
         if (textarea && (mode === "markdown" || mode === "split")) {
           const start = textarea.selectionStart;
           const end = textarea.selectionEnd;
-          onChange(`${value.slice(0, start)}${text}${value.slice(end)}`);
+          const source = textarea.value;
+          onChange(`${source.slice(0, start)}${text}${source.slice(end)}`, value);
           requestAnimationFrame(() => {
             textarea.focus();
             textarea.setSelectionRange(start + text.length, start + text.length);
@@ -288,7 +293,7 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
         if (target) { target.dataset.navigationMatch = "true"; target.scrollIntoView({ block: "center" }); }
         return;
       }
-      pendingSelection.current = [start, end];
+      pendingSelection.current = [value.slice(0, start).replace(/\r\n?/g, "\n").length, value.slice(0, end).replace(/\r\n?/g, "\n").length];
       setMode("markdown");
       requestAnimationFrame(() => {
         if (textareaRef.current && pendingSelection.current) {
@@ -304,17 +309,19 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
     const insertBlock = (markdown: string) => {
       if (readOnly || sourceComposing.current) return;
       if (mode === "visual" && richEditorRef.current) { richEditorRef.current.insertBlock(markdown); return; }
-      const position = textareaRef.current?.selectionEnd ?? value.length;
-      const prefix = value.slice(0, position), suffix = value.slice(position);
+      const source = textareaRef.current?.value ?? value;
+      const position = textareaRef.current?.selectionEnd ?? source.length;
+      const prefix = source.slice(0, position), suffix = source.slice(position);
       const next = appendMarkdownBlock(prefix, markdown) + (suffix ? "\n\n" + suffix : "");
       onChange(next, value);
     };
 
     const imageUpload = useDocumentImageUpload(onUploadImage, value, readOnly || mode === "preview", () => !sourceComposing.current, () => {
       if (mode === "visual") return richEditorRef.current?.captureBlockInsertion() ?? (() => false);
-      const position = textareaRef.current?.selectionEnd ?? value.length;
+      const source = textareaRef.current?.value ?? value;
+      const position = textareaRef.current?.selectionEnd ?? source.length;
       return markdown => {
-        const prefix = value.slice(0, position), suffix = value.slice(position);
+        const prefix = source.slice(0, position), suffix = source.slice(position);
         onChange(appendMarkdownBlock(prefix, markdown) + (suffix ? "\n\n" + suffix : ""), value);
         return true;
       };
@@ -331,7 +338,7 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
         mode === "visual"
           ? richEditorRef.current?.getSelectedText() || ""
           : textareaRef.current
-            ? value.slice(textareaRef.current.selectionStart, textareaRef.current.selectionEnd)
+            ? textareaRef.current.value.slice(textareaRef.current.selectionStart, textareaRef.current.selectionEnd)
             : "";
       setLinkDraft({ open: true, text: selectedText, address: "" });
     };
