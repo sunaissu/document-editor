@@ -87,6 +87,6 @@
   ],
   "dependencies": {
     "katex": "0.19.0",
-    "markdown-it": "^14.3.1"
+    "markdown-it": "^14.3.3"
   }
 }
