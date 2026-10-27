@@ -46,7 +46,9 @@
     "styles.css",
     "README.md",
     "LICENSE",
-    "assets/brand"
+    "assets/brand/sunaissu.svg",
+    "assets/brand/sora-OFL.txt",
+    "assets/brand/SOURCE.txt"
   ],
   "scripts": {
     "build": "tsup ./src/index.tsx ./src/yjs.ts --format cjs,esm --dts --clean",

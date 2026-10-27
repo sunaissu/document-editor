@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync, mkdirSync, existsSync, cpSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, existsSync, copyFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -26,7 +26,13 @@ const schema = config.packageName ? { '@context': 'https://schema.org', '@type':
 if (origin) schema.url = `${origin}/guide.html`;
 const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">${metadata(config.title, '/guide.html')}<style>body{font:18px/1.65 system-ui,sans-serif;margin:0;color:#172033;background:#f8fafc}main{max-width:780px;margin:auto;padding:32px 20px}nav{display:flex;gap:24px;flex-wrap:wrap}a{color:#174bc4}h1{line-height:1.2;font-size:2rem}h2{line-height:1.3;margin-top:2rem}pre{overflow:auto;background:#e8edf5;padding:16px;border-radius:8px}section{overflow-wrap:anywhere}footer{display:flex;align-items:center;gap:12px;border-top:1px solid #ccd5e2;margin-top:32px;padding-top:16px;font-size:12px;color:#64748b}footer img{display:block;object-fit:contain}</style>${config.packageName ? `<script type="application/ld+json">${JSON.stringify(schema).replace(/</g, '\\u003c')}</script>` : ''}</head><body><main><nav aria-label="Product navigation"><a href="/">Open ${escape(config.name)}</a><a href="/product.txt">Plain-text reference</a></nav><h1>${escape(config.title)}</h1><p>${escape(config.description)}</p>${sections}<section><h2>Links</h2><ul>${links || '<li>Use the app link above to open the workspace.</li>'}</ul></section><footer>${makerCredit}</footer></main></body></html>`;
 mkdirSync(output, {recursive:true});
-if (hasBrand) cpSync(brandDirectory, resolve(output, "brand"), { recursive: true });
+if (hasBrand) {
+  const brandOutput = resolve(output, 'brand');
+  mkdirSync(brandOutput, { recursive: true });
+  for (const filename of ['sunaissu-light.svg', 'bg-light.svg', 'sora-OFL.txt', 'SOURCE.txt']) {
+    copyFileSync(resolve(brandDirectory, filename), resolve(brandOutput, filename));
+  }
+}
 writeFileSync(resolve(output,'guide.html'),html);
 writeFileSync(resolve(output,'product.txt'),[config.title,config.description,...config.sections.flatMap(s=>[s.heading,...s.paragraphs,s.code||'']),...config.links.map(l=>`${l.label}: ${l.url}`)].join('\n\n')+'\n');
 if (config.mainMetadata) {
