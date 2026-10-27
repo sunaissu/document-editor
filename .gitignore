@@ -1,3 +1,17 @@
 node_modules
 dist
 *.tgz
+
+# Local planning and review notes
+/implementation-review.txt
+/feature-backlog.txt
+/RELEASE.txt
+/review-checklist.txt
+/qa/artifacts/
+
+# Local environment secrets; keep documented templates trackable.
+.env
+.env.*
+!.env.example
+!.env.sample
+!.env.template

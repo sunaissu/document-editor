@@ -1,5 +1,3 @@
-Release candidate details: [RELEASE.txt](./RELEASE.txt). This candidate has not been published.
-
 # @sunaissu/document-editor
 
 A controlled React document editor that stores portable Markdown while offering visual, Markdown source, preview, and split views.
@@ -142,11 +140,9 @@ The link dialog supports keyboard focus, Escape, and focus return. Visual serial
 
 `onChange(next, previous?)` includes the input's base when available. Forward both arguments when wrapping a collaborative binding. The binding also exposes `text` and `localOrigin` for host integration. Initialize persisted shared content on the server after loading it, before connecting editors.
 
-See [the implementation review](./implementation-review.txt) for checks and [the feature backlog](./feature-backlog.txt) for all 29 feature contracts, dependencies and acceptance checks. OPEN and PARTIAL items remain unfinished.
-
 ## Development checks
 
-Run `npm test`, `npm run playground:build`, and `npm pack --dry-run --json` before release. The GitHub Actions workflow is configured to test the package on Node 18, 22 and 24, build the playground on Node 22/24, and audit both dependency trees. Browser checks remain a separate local step documented in the implementation review. The workflow has not been run on GitHub as part of this local review.
+Run `npm test`, `npm run playground:build`, and `npm pack --dry-run --json` before release. The GitHub Actions workflow is configured to test the package on Node 18, 22 and 24, build the playground on Node 22/24, and audit both dependency trees. Run the browser checks in qa/ separately. The workflow has not been run on GitHub as part of this local review.
 
 ## Review safeguards
 
