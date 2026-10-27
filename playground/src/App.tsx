@@ -1,3 +1,5 @@
+import sunaissuMark from "../../assets/brand/sunaissu-dark.svg";
+import bgMark from "../../assets/brand/bg-dark.svg";
 import { useMemo, useRef, useState } from "react";
 import {
   DocumentEditor,
@@ -224,6 +226,7 @@ export default function App() {
           <summary>Inspect portable Markdown <span>{value.length} characters</span></summary>
           <pre {...getDocumentEditorScrollbarProps(scrollbar)}>{value}</pre>
         </details>
+      <footer className="maker-credit"><span>Made by</span><img className="maker-wordmark" src={sunaissuMark} alt="Sunaissu" width="81" height="26" /><img className="maker-monogram" src={bgMark} alt="bg_" width="26" height="13" /></footer>
       </main>
     </div>
   );

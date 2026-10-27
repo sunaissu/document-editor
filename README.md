@@ -1,5 +1,7 @@
 # @sunaissu/document-editor
 
+<p><img src="assets/brand/sunaissu.svg" alt="Sunaissu" width="104"></p>
+
 A controlled React document editor that stores portable Markdown while offering visual, Markdown source, preview, and split views.
 
 ## Install
