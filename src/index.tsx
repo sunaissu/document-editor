@@ -49,3 +49,6 @@ export type { DocumentImageUpload, UploadedDocumentImage } from "./imageUpload";
 export type { FormatState, SelectionFormats, RichTextSelection } from "./selectionFormatting";
 
 export { renderDocumentMath } from "./math";
+
+export { getDocumentEditorScrollbarStyle, getDocumentEditorScrollbarProps } from "./scrollbar";
+export type { DocumentEditorScrollbarOptions } from "./scrollbar";

@@ -7,7 +7,8 @@
 
 * { box-sizing: border-box; }
 body { min-width: 320px; min-height: 100vh; margin: 0; background: radial-gradient(circle at 15% -10%, rgba(56, 189, 248, 0.13), transparent 28rem), #080a0e; }
-button { font: inherit; }
+button, input, select { font: inherit; }
+.playground-scroll { height:100dvh; overflow:auto; }
 
 .playground-shell { width: min(1500px, calc(100% - 2rem)); margin: 0 auto; padding: 1.25rem 0 2rem; }
 .playground-header { display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; margin-bottom: 1rem; }
@@ -53,12 +54,11 @@ button { font: inherit; }
   .playground-header { align-items: flex-start; flex-direction: column; }
   .playground-grid { grid-template-columns: 1fr; }
   .inspector { border-top: 1px solid #252c35; border-left: 0; }
-  .editor-stage { height: 620px; }
+  .editor-stage { height: clamp(280px, calc(100dvh - 1rem), 760px); }
 }
 
 @media(max-width:900px) { .playground-shell { width: min(100% - 1rem, 760px); padding-top:1rem; } .playground-header { gap:.5rem; } .package-badge { display:none; } }
 
-/* Keep inspector controls readable and evenly spaced at every width. */
 .inspector { padding:20px; }
 .inspector-heading { gap:12px; flex-wrap:wrap; }
 .inspector-heading small { font-size:10px; color:#929dac; }
@@ -72,6 +72,18 @@ button { font: inherit; }
 .inspector :is(button,input,select):focus-visible, .source-drawer summary:focus-visible { outline:2px solid #7dd3fc; outline-offset:3px; }
 @media(max-width:900px) { .inspector { padding:20px; } .mode-grid button, .wide-action { min-height:42px; } }
 
-@media(min-width:901px) { .playground-grid { height:clamp(620px, calc(100dvh - 160px), 960px); min-height:0; } .editor-stage { height:100%; min-height:0; } .inspector { overflow-y:auto; overscroll-behavior:contain; scrollbar-width:thin; } }
+@media(min-width:901px) { .playground-grid { height:clamp(620px, calc(100dvh - 160px), 960px); min-height:0; } .editor-stage { height:100%; min-height:0; } .inspector { overflow-y:auto; overscroll-behavior:contain; } }
 
 .inspector .three-columns { grid-template-columns:repeat(3,minmax(0,1fr)); }
+.inspector select { width:100%; border:1px solid #29313b; border-radius:7px; color:#e7edf5; background:#141820; color-scheme:dark; }
+.scrollbar-settings { margin-top:20px; border-block:1px solid #29313b; }
+.scrollbar-settings summary { min-height:44px; padding:12px 0; cursor:pointer; font-size:12px; }
+.scrollbar-settings .control-group { margin:0 0 12px; }
+.scrollbar-settings .transparent-track { display:flex; align-items:center; gap:8px; min-height:44px; text-transform:none; letter-spacing:0; font-size:12px; }
+.transparent-track input { width:18px; height:18px; margin:0; accent-color:#7dd3fc; }
+.scrollbar-settings input:disabled { opacity:.4; }
+
+@media (pointer: coarse) {
+  .inspector :is(button, input, select) { min-height: 44px; }
+  .source-drawer summary { min-height: 44px; }
+}

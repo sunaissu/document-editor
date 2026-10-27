@@ -31,10 +31,19 @@ export function SlashMenu({ container, enabled, mode, onCommand }: Props) {
       }
       if (query === undefined || !rect) { setMenu(null); return; }
       const bounds = root.getBoundingClientRect(), width = Math.min(320, bounds.width - 24);
-      const height = Math.min(300, bounds.height - 24);
-      const below = rect.bottom - bounds.top + 8;
-      const top = below + height <= bounds.height - 12 ? below : Math.max(12, rect.top - bounds.top - height - 8);
-      setMenu({ query, left: Math.max(12, Math.min(rect.left - bounds.left, bounds.width - width - 12)), top, height, input });
+      const workspace = root.querySelector(".sunaissu-document-workspace")?.getBoundingClientRect() ?? bounds;
+      let visibleTop = Math.max(workspace.top, bounds.top, 0) + 8;
+      let visibleBottom = Math.min(workspace.bottom, bounds.bottom, window.innerHeight) - 8;
+      // Short landscape and keyboard-sized viewports need room above the writing pane.
+      if (visibleBottom - visibleTop < 160) {
+        visibleTop = Math.max(bounds.top, 0) + 8;
+        visibleBottom = Math.min(bounds.bottom, window.innerHeight) - 8;
+      }
+      const height = Math.min(300, visibleBottom - visibleTop);
+      if (height < 72) { setMenu(null); return; }
+      const below = rect.bottom + 8;
+      const top = below + height <= visibleBottom ? Math.max(visibleTop, below) : Math.max(visibleTop, rect.top - height - 8);
+      setMenu({ query, left: Math.max(12, Math.min(rect.left - bounds.left, bounds.width - width - 12)), top: top - bounds.top, height, input });
       setActive(0);
     };
     const keydown = (event: KeyboardEvent) => {

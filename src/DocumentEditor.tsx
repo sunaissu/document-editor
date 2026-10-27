@@ -1,4 +1,5 @@
 import { useEditorHistory } from "./useEditorHistory";
+import { getDocumentEditorScrollbarProps, type DocumentEditorScrollbarOptions } from "./scrollbar";
 import { useDocumentImageUpload, type DocumentImageUpload } from "./imageUpload";
 import type { TableAction } from "./table";
 import type { DocumentHistory } from "./history";
@@ -65,6 +66,8 @@ export interface DocumentEditorProps {
   themeOverrides?: Partial<DocumentEditorTheme>;
   /** Primary drives links/active controls; secondary drives success and supporting accents. */
   brandColors?: DocumentEditorBrandColors;
+  /** Customize this editor's scrollbars, or omit for native browser styling. */
+  scrollbar?: DocumentEditorScrollbarOptions;
   style?: React.CSSProperties;
 }
 
@@ -102,6 +105,7 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
       theme = "system",
       themeOverrides,
       brandColors,
+      scrollbar,
       style,
     },
     forwardedRef,
@@ -155,6 +159,7 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
       onChange(next, previous);
     };
     const resolvedTheme = useDocumentEditorResolvedTheme(theme);
+    const scrollbarProps = getDocumentEditorScrollbarProps(scrollbar);
     const themeTokens = useMemo(
       () => ({
         ...applyDocumentEditorBrandColors(
@@ -426,7 +431,8 @@ export const DocumentEditor = forwardRef<DocumentEditorHandle, DocumentEditorPro
         className={`sunaissu-document-editor mode-${mode} ${className}`.trim()}
         data-theme={resolvedTheme}
         data-theme-mode={theme}
-        style={{ ...getDocumentEditorThemeStyle(themeTokens), ...style }}
+        data-document-editor-scrollbar={scrollbarProps["data-document-editor-scrollbar"]}
+        style={{ ...getDocumentEditorThemeStyle(themeTokens), ...scrollbarProps.style, ...style }}
       >
         <DocumentTools textStyle={blockType} onTextStyleChange={style => {
           if (readOnly || mode === "preview" || sourceComposing.current) return;
