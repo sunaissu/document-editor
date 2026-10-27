@@ -3,6 +3,7 @@ import { Toolbar, ToolbarGroup, ToolbarIcon } from "./Toolbar";
 import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
 import { findDocumentMatches, getDocumentOutline, safeDocumentImage } from "./parser";
 import { escapeMarkdownLabel, markdownDestination } from "./markdown";
+import { previewDocumentReplacement } from "./replacementPreview";
 
 export type DocumentPanel = "find" | "outline" | "table" | "image" | null;
 export { ToolbarGroup } from "./Toolbar";
@@ -41,6 +42,7 @@ export function DocumentTools({ value, readOnly, panel, onPanelChange, onChange,
   useEffect(() => { if (visiblePanel) (panelRef.current?.querySelector<HTMLElement>('input:not([hidden]):not([type="hidden"]), nav button') || panelRef.current?.querySelector<HTMLElement>("button"))?.focus(); }, [visiblePanel]);
   const close = () => { onPanelChange(null); if (panelOpener.current?.isConnected) panelOpener.current.focus(); };
   const matches = useMemo(() => findDocumentMatches(value, query, { matchCase, wholeWord }), [value, query, matchCase, wholeWord]);
+  const replacementPreview = useMemo(() => reviewedValue === value ? previewDocumentReplacement(value, query, replacement, { matchCase, wholeWord }) : null, [reviewedValue, value, query, replacement, matchCase, wholeWord]);
   const outline = useMemo(() => panel === "outline" ? getDocumentOutline(value) : [], [value, panel]);
   const active = matches.length ? cursor % matches.length : 0;
   const select = (index: number) => { if (!matches.length) return; const next = (index + matches.length) % matches.length; setCursor(next); onSelect(matches[next], matches[next] + query.length); };
@@ -63,7 +65,7 @@ export function DocumentTools({ value, readOnly, panel, onPanelChange, onChange,
     ><ToolbarIcon name={style.label} /></button>)}</ToolbarGroup></>} secondary={<>
       {!readOnly && listTools}
       {!readOnly && <ToolbarGroup label="Insert">{insertTools}{toggle("table", "Table")}{toggle("image", "Image")}<button type="button" title="Equation" aria-label="Equation" onClick={() => onInsert("$\nE = mc^2\n$")}>Equation</button><button type="button" title="Divider" aria-label="Divider" onClick={() => onInsert("---")}><ToolbarIcon name="Divider" /><span>Divider</span></button></ToolbarGroup>}
-      
+
       {contextTools}
     </>} />
     <div className="sunaissu-document-workspace">
@@ -76,12 +78,13 @@ export function DocumentTools({ value, readOnly, panel, onPanelChange, onChange,
             <div className="document-tool-options"><label><input type="checkbox" checked={matchCase} onChange={event => { setMatchCase(event.target.checked); setReviewedValue(null); }} />Match case</label><label><input type="checkbox" checked={wholeWord} onChange={event => { setWholeWord(event.target.checked); setReviewedValue(null); }} />Whole word</label></div>
             <div className="document-tool-row"><button type="button" disabled={!matches.length} onClick={() => select(active - 1)}>Previous</button><button type="button" disabled={!matches.length} onClick={() => select(active + 1)}>Next</button><output aria-live="polite">{matches.length ? active + 1 : 0} / {matches.length}</output></div>
             {!readOnly && <><hr /><label>Replace with<input value={replacement} onChange={event => { setReplacement(event.target.value); setReviewedValue(null); }} /></label><div className="document-tool-row"><button type="button" disabled={!matches.length} onClick={() => replace(false)}>Replace</button><button type="button" disabled={!matches.length} onClick={() => setReviewedValue(value)}>Review replace all</button></div>
-            {reviewedValue === value && <div className="document-replace-confirm" role="status"><p>Replace {matches.length} matches with “{replacement || "(empty)"}”?</p><div className="document-tool-row"><button type="button" onClick={() => replace(true)}>Apply</button><button type="button" onClick={() => setReviewedValue(null)}>Cancel</button></div></div>}</>}
+            {reviewedValue === value && <div className="document-replace-confirm" role="status"><p>Replace {matches.length} matches with “{replacement || "(empty)"}”?</p><div className="document-replacement-preview" role="region" aria-label="Replacement preview"><p>Showing {replacementPreview?.entries.length} of {replacementPreview?.total} changes. Removed text is struck through; new text is underlined.</p>{replacementPreview?.entries.map((entry,index)=><div key={entry.start}><p>{entry.start>40?"…":""}{entry.before}<del>{entry.match}</del><ins>{entry.replacement || "[delete]"}</ins>{entry.after}{entry.end+40<value.length?"…":""}</p><button type="button" onClick={()=>{onPanelChange(null);onSelect(entry.start,entry.end);}}>Go to match {index+1}</button></div>)}</div></div>}</>}
           </>}
           {visiblePanel === "outline" && <><small>{outline.length} headings</small><nav aria-label="Document outline" className="document-outline-list">{outline.length ? outline.map(heading => <button type="button" key={heading.start} style={{ paddingLeft: 10 + (heading.level - 1) * 12 }} onClick={() => onSelect(heading.start, heading.end)}><span>H{heading.level}</span>{heading.text}</button>) : <p>Add headings to navigate your document.</p>}</nav></>}
           {visiblePanel === "table" && <><p>Choose a size. You can add rows and columns later.</p><div className="document-tool-row"><label>Rows<input type="number" min={1} max={20} value={rows} onChange={event => setRows(Math.min(20, Math.max(1, Math.floor(Number(event.target.value)) || 1)))} /></label><label>Columns<input type="number" min={1} max={10} value={columns} onChange={event => setColumns(Math.min(10, Math.max(1, Math.floor(Number(event.target.value)) || 1)))} /></label></div><button type="button" onClick={insertTable}>Insert table</button></>}
           {visiblePanel === "image" && <>{imageUpload}<label>Image URL<input type="url" value={imageUrl} onChange={event => setImageUrl(event.target.value)} placeholder="https://… or relative path" /></label><label>Image description<input value={imageAlt} onChange={event => setImageAlt(event.target.value)} /></label><button type="button" disabled={!imageUrl || safeDocumentImage(imageUrl) === "#"} onClick={() => { onInsert("![" + escapeMarkdownLabel(imageAlt) + "](" + markdownDestination(safeDocumentImage(imageUrl)) + ")"); setImageUrl(""); setImageAlt(""); onPanelChange(null); }}>Insert image</button></>}
         </div>
+        {visiblePanel === "find" && !readOnly && reviewedValue === value && <div className="document-tool-footer"><div className="document-tool-row"><button type="button" onClick={() => replace(true)}>Apply</button><button type="button" onClick={() => setReviewedValue(null)}>Cancel</button></div></div>}
       </aside>}
     </div>
   </>;

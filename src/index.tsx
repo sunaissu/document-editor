@@ -39,6 +39,7 @@ export { DocumentEditor as default } from "./DocumentEditor";
 
 export { findDocumentMatches, getDocumentOutline } from "./parser";
 export type { FindOptions, DocumentHeading } from "./parser";
+export { previewDocumentReplacement } from "./replacementPreview";
 
 export type { DocumentHistory } from "./history";
 

@@ -356,3 +356,14 @@
 .document-math { overflow-wrap: normal; }
 div.document-math { overflow-x: auto; overscroll-behavior: contain; padding-block: .75rem; }
 .document-math math { max-width: 100%; }
+
+.document-replacement-preview { font-size:12px;line-height:1.6;overflow-wrap:anywhere; }
+.document-replacement-preview > div { border-top:1px solid var(--document-border);padding:8px 0; }
+.document-replacement-preview p { white-space:pre-wrap; }
+.document-replacement-preview del { text-decoration:line-through; }
+.document-replacement-preview ins { text-decoration:underline;text-decoration-thickness:2px;background:var(--document-accent-soft);color:var(--document-text); }
+.document-tool-panel { display:flex;flex-direction:column;overflow:hidden; }
+.document-tool-panel > header { flex-shrink:0;background:var(--document-surface); }
+.document-tool-content { min-height:0;flex:1;overflow:auto;align-content:start;overscroll-behavior:contain; }
+.document-tool-footer { flex-shrink:0;padding:10px 20px;border-top:1px solid var(--document-border);background:var(--document-surface); }
+.document-tool-footer button { min-height:44px;padding:8px 12px;border:1px solid var(--document-border);border-radius:8px;background:var(--document-bg);color:var(--document-text);font:inherit;cursor:pointer; }
